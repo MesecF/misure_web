@@ -36,7 +36,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts',
+    'catalog',
+    'measurements',
 ]
+
+AUTH_USER_MODEL = 'accounts.User'
+
+AUTHENTICATION_BACKENDS = ['accounts.backends.TenantModelBackend']
+
+# Usernames are unique per tenant (enforced by constraints), which TenantModelBackend handles
+SILENCED_SYSTEM_CHECKS = ['auth.W004']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
