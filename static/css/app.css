@@ -1,1 +1,7 @@
 /* Application-specific styles; Bootstrap covers the rest */
+
+/* Measurement entry: element codes or names, chosen with the "show element names" switch */
+.show-element-codes .element-name,
+.show-element-names .element-code {
+  display: none;
+}

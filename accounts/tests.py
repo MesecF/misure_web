@@ -145,6 +145,24 @@ class LoginFlowTests(TestCase):
         self.assertRedirects(response, reverse('login'))
         self.assertContains(self.client.get(reverse('login')), '<html lang="it">')
 
+    def test_pages_are_translated(self):
+        self.login(self.tenant_a, 'admin', 'pw-a')
+        expected = {
+            'hr': ['Novo mjerenje', 'Administracija', 'Odjava', 'Kategorije'],
+            'it': ['Nuova misurazione', 'Amministrazione', 'Esci', 'Categorie'],
+            'en': ['New measurement', 'Administration', 'Log out', 'Categories'],
+        }
+        for language, texts in expected.items():
+            self.client.post(reverse('set_language'), {'language': language, 'next': '/'})
+            response = self.client.get(reverse('home'))
+            for text in texts:
+                self.assertContains(response, text, msg_prefix=language)
+
+    def test_login_error_is_translated(self):
+        self.client.post(reverse('set_language'), {'language': 'hr', 'next': '/'})
+        response = self.login(self.tenant_b, 'admin', 'pw-a')
+        self.assertContains(response, 'Neispravna tvrtka, korisničko ime ili lozinka.')
+
 
 class TenantMixinTests(TestCase):
     @classmethod

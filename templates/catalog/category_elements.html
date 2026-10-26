@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Elements' %} · {{ category.code }} · Misure{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">
+      {% blocktranslate with category=category %}Elements of category {{ category }}{% endblocktranslate %}
+    </h1>
+    <a href="{% url 'catalog:category_list' %}" class="btn btn-link">{% translate 'Back to categories' %}</a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="table-responsive">
+        <table class="table bg-white border align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 11rem">{% translate 'Order' %}</th>
+              <th>{% translate 'Code' %}</th>
+              <th>{% translate 'Name' %}</th>
+              <th>{% translate 'Unit' %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for link in links %}
+              <tr{% if not link.element.is_active %} class="text-body-secondary"{% endif %}>
+                <td>
+                  <form action="{% url 'catalog:category_element_update' link.pk %}" method="post" class="d-flex gap-1">
+                    {% csrf_token %}
+                    <input type="number" name="sort_order" value="{{ link.sort_order }}" min="0"
+                           class="form-control form-control-sm" aria-label="{% translate 'Order' %}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">{% translate 'Save' %}</button>
+                  </form>
+                </td>
+                <td>{{ link.element.code }}</td>
+                <td>
+                  {{ link.element.name }}
+                  {% if not link.element.is_active %}<span class="badge text-bg-secondary">{% translate 'Inactive' %}</span>{% endif %}
+                </td>
+                <td>{{ link.element.unit }}</td>
+                <td class="text-end">
+                  <form action="{% url 'catalog:category_element_delete' link.pk %}" method="post"
+                        onsubmit="return confirm(this.dataset.confirm)"
+                        data-confirm="{% blocktranslate with element=link.element.name %}Remove {{ element }} from this category?{% endblocktranslate %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">{% translate 'Remove' %}</button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center text-body-secondary py-4">{% translate 'No elements in this category yet.' %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="small text-body-secondary">
+        {% translate 'Inactive elements stay in the list but are not offered when measuring. Removing an element from the category does not change recorded measurements.' %}
+      </p>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h5">{% translate 'Add element' %}</h2>
+          {% if form.fields.element.queryset.exists %}
+            <form method="post" novalidate>
+              {% csrf_token %}
+              {% include 'partials/form_fields.html' %}
+              <button type="submit" class="btn btn-primary">{% translate 'Add' %}</button>
+            </form>
+          {% else %}
+            <p class="text-body-secondary mb-0">
+              {% translate 'All active elements are already in this category.' %}
+              <a href="{% url 'catalog:element_create' %}">{% translate 'New element' %}</a>
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

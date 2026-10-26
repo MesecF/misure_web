@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.db.models import Q
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -11,9 +10,9 @@ from django.views.generic import CreateView, FormView, ListView, UpdateView
 
 from accounts.mixins import TenantAdminRequiredMixin, TenantAuditFormMixin, TenantQuerysetMixin
 
-from .forms import ArticleForm, ArticleImportForm, CategoryForm, ElementForm
+from .forms import ArticleForm, ArticleImportForm, CategoryElementForm, CategoryForm, ElementForm
 from .importers import import_articles
-from .models import Article, Category, Element
+from .models import Article, Category, CategoryElement, Element
 
 
 class SaveMessageMixin:
@@ -76,11 +75,8 @@ class ElementListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
     model = Element
 
     def get_queryset(self):
-        elements = super().get_queryset().select_related('category')
-        self.category_filter = self.request.GET.get('category', '')
+        elements = super().get_queryset().prefetch_related('category_elements__category')
         self.status_filter = self.request.GET.get('status', 'active')
-        if self.category_filter.isdigit():
-            elements = elements.filter(category_id=self.category_filter)
         if self.status_filter == 'active':
             elements = elements.filter(is_active=True)
         elif self.status_filter == 'inactive':
@@ -89,8 +85,6 @@ class ElementListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.filter(tenant=self.request.tenant)
-        context['category_filter'] = self.category_filter
         context['status_filter'] = self.status_filter
         return context
 
@@ -99,30 +93,6 @@ class ElementCreateView(TenantAdminRequiredMixin, TenantAuditFormMixin, SaveMess
     model = Element
     form_class = ElementForm
     success_url = reverse_lazy('catalog:element_list')
-
-    def get_initial(self):
-        # Keep the category selected in the list filter and suggest its next sort order
-        category = get_category_from_query(self.request)
-        if category is None:
-            return {'sort_order': None}
-        return {'category': category, 'sort_order': Element.next_sort_order(category)}
-
-
-def get_category_from_query(request):
-    category_id = request.GET.get('category', '')
-    if not category_id.isdigit():
-        return None
-    return Category.objects.filter(tenant=request.tenant, pk=category_id).first()
-
-
-class ElementNextSortOrderView(TenantAdminRequiredMixin, View):
-    """HTMX: returns the sort order input filled with the next free number of the chosen category."""
-
-    def get(self, request):
-        category = get_category_from_query(request)
-        initial = {'sort_order': Element.next_sort_order(category) if category else None}
-        form = ElementForm(tenant=request.tenant, initial=initial)
-        return HttpResponse(str(form['sort_order']))
 
 
 class ElementUpdateView(TenantAdminRequiredMixin, TenantQuerysetMixin, TenantAuditFormMixin, SaveMessageMixin,
@@ -135,6 +105,65 @@ class ElementUpdateView(TenantAdminRequiredMixin, TenantQuerysetMixin, TenantAud
 class ElementToggleActiveView(ToggleActiveView):
     model = Element
     success_url = reverse_lazy('catalog:element_list')
+
+
+# Elements of a category
+
+class CategoryElementsView(TenantAdminRequiredMixin, View):
+    """Elements measured for a category: list, add, change sort order, remove."""
+
+    def get(self, request, pk):
+        category = get_object_or_404(Category, pk=pk, tenant=request.tenant)
+        form = CategoryElementForm(category=category,
+                                   initial={'sort_order': CategoryElement.next_sort_order(category)})
+        return self.render(request, category, form)
+
+    def post(self, request, pk):
+        category = get_object_or_404(Category, pk=pk, tenant=request.tenant)
+        form = CategoryElementForm(request.POST, category=category)
+        if not form.is_valid():
+            return self.render(request, category, form)
+        link = form.save(commit=False)
+        link.tenant = request.tenant
+        link.category = category
+        link.created_by = request.user
+        link.save()
+        messages.success(request, _('"%(element)s" added.') % {'element': link.element})
+        return redirect('catalog:category_elements', pk=category.pk)
+
+    @staticmethod
+    def render(request, category, form):
+        links = category.category_elements.select_related('element').order_by('sort_order')
+        return render(request, 'catalog/category_elements.html', {
+            'category': category, 'links': links, 'form': form,
+        })
+
+
+class CategoryElementUpdateView(TenantAdminRequiredMixin, View):
+    """Changes the sort order of an element in a category."""
+
+    def post(self, request, pk):
+        link = get_object_or_404(CategoryElement, pk=pk, tenant=request.tenant)
+        form = CategoryElementForm(request.POST, instance=link, category=link.category)
+        if form.is_valid():
+            if form.has_changed():
+                link.updated_at = timezone.now()
+                link.updated_by = request.user
+                form.save()
+                messages.success(request, _('"%(element)s" saved.') % {'element': link.element})
+        else:
+            messages.error(request, ' '.join(form.errors['sort_order']))
+        return redirect('catalog:category_elements', pk=link.category_id)
+
+
+class CategoryElementDeleteView(TenantAdminRequiredMixin, View):
+    """Removes an element from a category; recorded measurements keep their values."""
+
+    def post(self, request, pk):
+        link = get_object_or_404(CategoryElement, pk=pk, tenant=request.tenant)
+        link.delete()
+        messages.success(request, _('"%(element)s" removed from the category.') % {'element': link.element})
+        return redirect('catalog:category_elements', pk=link.category_id)
 
 
 # Articles

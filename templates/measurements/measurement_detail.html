@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Measurement' %} · Misure{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">
+      {% translate 'Measurement' %} {{ measurement.measured_at|date:'d.m.Y H:i:s' }}
+      {% if measurement.deleted_at %}<span class="badge text-bg-danger align-middle">{% translate 'deleted' %}</span>{% endif %}
+    </h1>
+    <a href="{{ next }}" class="btn btn-link">{% translate 'Back to measurements' %}</a>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex flex-wrap gap-3">
+          <strong>{{ measurement.article_code }}</strong>
+          <span>{% translate 'Color' %}: <strong>{{ measurement.article_color }}</strong></span>
+          <span>{% translate 'Size' %}: <strong>{{ measurement.article_size }}</strong></span>
+          <span>{% translate 'Category' %}: <strong>{{ measurement.category_code }}</strong></span>
+          <span class="font-monospace text-body-secondary ms-auto">{{ measurement.article_barcode }}</span>
+        </div>
+        <div class="card-body">
+          {% if can_edit %}
+            <form method="post" novalidate>
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ next }}">
+              <div class="mb-3" style="max-width: 16rem">
+                <label for="employee_number" class="form-label">{% translate 'Employee number' %}</label>
+                <input type="text" id="employee_number" name="employee_number" value="{{ employee_number }}"
+                       inputmode="numeric" class="form-control{% if employee_error %} is-invalid{% endif %}">
+                {% if employee_error %}<div class="invalid-feedback">{{ employee_error }}</div>{% endif %}
+              </div>
+              {% if form.error %}<div class="alert alert-danger py-2">{{ form.error }}</div>{% endif %}
+              <div class="row g-3 mb-3">
+                {% for element, text, element_error in form.rows %}
+                  <div class="col-sm-6 col-md-4">
+                    <label for="element_{{ element.pk }}" class="form-label mb-1">
+                      {{ element.name }} <span class="text-body-secondary">({{ element.unit }})</span>
+                    </label>
+                    <input type="text" id="element_{{ element.pk }}" name="element_{{ element.pk }}" value="{{ text }}"
+                           inputmode="decimal" class="form-control{% if element_error %} is-invalid{% endif %}">
+                    {% if element_error %}<div class="invalid-feedback">{{ element_error }}</div>{% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+              <button type="submit" class="btn btn-primary">{% translate 'Save correction' %}</button>
+            </form>
+          {% else %}
+            <p>{% translate 'Employee number' %}: <strong>{{ measurement.employee_number }}</strong></p>
+            <table class="table table-sm mb-0">
+              <tbody>
+                {% for value in measurement.values.all %}
+                  <tr>
+                    <th>{{ value.element_name }}</th>
+                    <td class="text-end">{{ value.value }} {{ value.element_unit }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-body small">
+          <p class="mb-1">{% translate 'Entered by' %}: <strong>{{ measurement.created_by.username }}</strong>, {{ measurement.created_at|date:'d.m.Y H:i:s' }}</p>
+          {% if measurement.updated_at %}
+            <p class="mb-1">{% translate 'Last corrected by' %}: <strong>{{ measurement.updated_by.username }}</strong>, {{ measurement.updated_at|date:'d.m.Y H:i:s' }}</p>
+          {% endif %}
+          {% if measurement.deleted_at %}
+            <p class="mb-0">{% translate 'Deleted by' %}: <strong>{{ measurement.deleted_by.username }}</strong>, {{ measurement.deleted_at|date:'d.m.Y H:i:s' }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if request.user.is_tenant_admin %}
+        {% if measurement.deleted_at %}
+          <form action="{% url 'measurements:restore' measurement.pk %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-outline-success">{% translate 'Restore measurement' %}</button>
+          </form>
+        {% else %}
+          <form action="{% url 'measurements:delete' measurement.pk %}" method="post"
+                onsubmit="return confirm(this.dataset.confirm)" data-confirm="{% translate 'Delete this measurement?' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn btn-outline-danger">{% translate 'Delete measurement' %}</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

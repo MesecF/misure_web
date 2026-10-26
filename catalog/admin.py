@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Article, Category, Element
+from .models import Article, Category, CategoryElement, Element
 
 
 class ReadOnlyAdmin(admin.ModelAdmin):
@@ -32,6 +32,12 @@ class ArticleAdmin(ReadOnlyAdmin):
 
 @admin.register(Element)
 class ElementAdmin(ReadOnlyAdmin):
-    list_display = ('code', 'name', 'unit', 'category', 'sort_order', 'tenant', 'is_active')
-    list_filter = ('tenant', 'category', 'is_active')
+    list_display = ('code', 'name', 'unit', 'tenant', 'is_active')
+    list_filter = ('tenant', 'is_active')
     search_fields = ('code', 'name')
+
+
+@admin.register(CategoryElement)
+class CategoryElementAdmin(ReadOnlyAdmin):
+    list_display = ('category', 'sort_order', 'element', 'tenant')
+    list_filter = ('tenant', 'category')

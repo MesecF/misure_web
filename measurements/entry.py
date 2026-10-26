@@ -8,7 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from catalog.models import Article, Element
+from catalog.models import Article, CategoryElement
 
 from .models import Measurement, MeasurementValue
 
@@ -45,7 +45,7 @@ def find_article(tenant, barcode):
 
 
 def elements_for(article):
-    return list(Element.objects.filter(category=article.category, is_active=True).order_by('sort_order', 'code'))
+    return CategoryElement.active_elements(article.category)
 
 
 def parse_value(text):
@@ -127,3 +127,31 @@ def todays_measurements(article, elements):
         value_by_element = {v.element_id: v.value for v in measurement.values.all()}
         measurement.element_values = [value_by_element.get(element.pk) for element in elements]
     return measurements
+
+
+def update_measurement(measurement, employee_number, form, user):
+    """Saves an admin's correction; returns whether anything changed (then updated_* is set)."""
+    existing = {value.element_id: value for value in measurement.values.all()}
+    changed = measurement.employee_number != employee_number
+    with transaction.atomic():
+        for element in form.elements:
+            new_value = form.values.get(element.pk)
+            current = existing.get(element.pk)
+            if current is not None and new_value is None:
+                current.delete()
+                changed = True
+            elif current is None and new_value is not None:
+                value = MeasurementValue(measurement=measurement, element=element, value=new_value)
+                value.copy_element_data()
+                value.save()
+                changed = True
+            elif current is not None and current.value != new_value:
+                current.value = new_value
+                current.save(update_fields=['value'])
+                changed = True
+        if changed:
+            measurement.employee_number = employee_number
+            measurement.updated_at = timezone.now()
+            measurement.updated_by = user
+            measurement.save(update_fields=['employee_number', 'updated_at', 'updated_by'])
+    return changed

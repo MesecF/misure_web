@@ -12,7 +12,34 @@
   const summary = document.getElementById('confirm-summary');
   const emptyMessage = document.getElementById('confirm-empty');
   const saveButton = document.getElementById('confirm-save');
+  const namesSwitch = document.getElementById('show-element-names');
+  const LABELS_KEY = 'misure.showElementNames';
   let saving = false;
+
+  // Element codes (default) or names; the choice is remembered in this browser
+  function showElementNames(show) {
+    form.classList.toggle('show-element-names', show);
+    form.classList.toggle('show-element-codes', !show);
+    namesSwitch.checked = show;
+  }
+
+  try {
+    showElementNames(localStorage.getItem(LABELS_KEY) === '1');
+  } catch (error) {
+    showElementNames(false);
+  }
+
+  namesSwitch.addEventListener('change', () => {
+    showElementNames(namesSwitch.checked);
+    try {
+      localStorage.setItem(LABELS_KEY, namesSwitch.checked ? '1' : '0');
+    } catch (error) {
+      // Not remembered, but the switch still works for this page
+    }
+    // Back to where the employee was typing
+    const inputs = elementInputs();
+    focusAndSelect(inputs[0] || barcode);
+  });
 
   function elementInputs() {
     return Array.from(panel.querySelectorAll('.element-input'));
@@ -41,7 +68,7 @@
     summary.replaceChildren(...filled.map((input) => {
       const row = document.createElement('tr');
       const label = document.createElement('th');
-      label.textContent = input.dataset.label;
+      label.textContent = namesSwitch.checked ? input.dataset.name : input.dataset.code;
       const value = document.createElement('td');
       value.className = 'text-end';
       value.textContent = `${input.value.trim()} ${input.dataset.unit}`;

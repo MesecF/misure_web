@@ -22,7 +22,7 @@
             {# Links are enabled as their pages are built in later phases #}
             <ul class="navbar-nav me-auto">
               <li class="nav-item"><a class="nav-link" href="{% url 'measurements:entry' %}">{% translate 'New measurement' %}</a></li>
-              <li class="nav-item"><span class="nav-link disabled">{% translate 'Measurements' %}</span></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'measurements:list' %}">{% translate 'Measurements' %}</a></li>
               {% if request.user.is_tenant_admin %}
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"

@@ -1,8 +1,7 @@
 from django import forms
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from .models import Article, Category, Element
+from .models import Article, Category, CategoryElement, Element
 
 
 class BootstrapFormMixin:
@@ -41,44 +40,46 @@ class CategoryForm(BootstrapFormMixin, forms.ModelForm):
 class ElementForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Element
-        fields = ['category', 'code', 'name', 'unit', 'sort_order']
+        fields = ['code', 'name', 'unit']
 
     def __init__(self, *args, tenant, **kwargs):
         self.tenant = tenant
         super().__init__(*args, **kwargs)
-        # Only the tenant's active categories, plus the current category when editing
-        categories = Category.objects.filter(tenant=tenant, is_active=True)
-        if self.instance.category_id:
-            categories = categories | Category.objects.filter(pk=self.instance.category_id)
-        self.fields['category'].queryset = categories.order_by('code')
-        if self.instance.pk and self.instance.values.exists():
-            # Recorded measurements refer to this element under its category
-            self.fields['category'].disabled = True
-            self.fields['category'].help_text = _('The category cannot be changed because the element is used in measurements.')
-        if not self.instance.pk:
-            # Choosing a category fills in the next free sort order of that category
-            self.fields['category'].widget.attrs.update({
-                'hx-get': reverse('catalog:element_next_sort_order'),
-                'hx-target': f'#{self["sort_order"].auto_id}',
-                'hx-swap': 'outerHTML',
-            })
-        self.fields['sort_order'].help_text = _('Unique within the category. Numbering in steps of 10 leaves room to insert elements later.')
-
-    def clean(self):
-        cleaned_data = super().clean()
-        category = cleaned_data.get('category')
-        code = cleaned_data.get('code')
-        sort_order = cleaned_data.get('sort_order')
-        if category:
-            others = Element.objects.filter(category=category).exclude(pk=self.instance.pk)
-            if code and others.filter(code=code).exists():
-                self.add_error('code', _('This category already has an element with this code.'))
-            if sort_order is not None and others.filter(sort_order=sort_order).exists():
-                self.add_error('sort_order', _('This category already has an element with this sort order.'))
-        return cleaned_data
 
     def clean_code(self):
-        return self.cleaned_data['code'].strip()
+        code = self.cleaned_data['code']
+        duplicates = Element.objects.filter(tenant=self.tenant, code=code).exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise forms.ValidationError(_('An element with this code already exists.'))
+        return code
+
+
+class CategoryElementForm(BootstrapFormMixin, forms.ModelForm):
+    """Adds an element to a category (element and sort order) or changes its sort order (sort order only)."""
+
+    class Meta:
+        model = CategoryElement
+        fields = ['element', 'sort_order']
+
+    def __init__(self, *args, category, **kwargs):
+        self.category = category
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            del self.fields['element']
+        else:
+            # Active elements of the tenant that are not in the category yet
+            self.fields['element'].queryset = (
+                Element.objects.filter(tenant=category.tenant, is_active=True)
+                .exclude(category_elements__category=category)
+            )
+        self.fields['sort_order'].help_text = _('Unique within the category. Numbering in steps of 10 leaves room to insert elements later.')
+
+    def clean_sort_order(self):
+        sort_order = self.cleaned_data['sort_order']
+        others = CategoryElement.objects.filter(category=self.category).exclude(pk=self.instance.pk)
+        if others.filter(sort_order=sort_order).exists():
+            raise forms.ValidationError(_('This category already has an element with this sort order.'))
+        return sort_order
 
 
 class ArticleForm(BootstrapFormMixin, forms.ModelForm):

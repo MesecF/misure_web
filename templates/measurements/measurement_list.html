@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Measurements' %} · Misure{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{% translate 'Measurements' %}</h1>
+    {% if filter.category %}
+      <div class="d-flex gap-2">
+        <a href="{% url 'measurements:export' 'xlsx' %}?{{ filter_query }}" class="btn btn-outline-success">{% translate 'Export to Excel' %}</a>
+        <a href="{% url 'measurements:export' 'csv' %}?{{ filter_query }}" class="btn btn-outline-secondary">{% translate 'Export to CSV' %}</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <form method="get" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-6 col-lg-2">
+        <label for="date_from" class="form-label small mb-1">{% translate 'From' %}</label>
+        <input type="date" id="date_from" name="date_from" value="{{ filter.date_from|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label for="date_to" class="form-label small mb-1">{% translate 'To' %}</label>
+        <input type="date" id="date_to" name="date_to" value="{{ filter.date_to|date:'Y-m-d' }}" class="form-control">
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <label for="category" class="form-label small mb-1">{% translate 'Category' %}</label>
+        <select id="category" name="category" class="form-select">
+          {% for category in filter.categories %}
+            <option value="{{ category.pk }}"{% if category == filter.category %} selected{% endif %}>
+              {{ category }}{% if not category.is_active %} ({% translate 'inactive' %}){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <label for="q" class="form-label small mb-1">{% translate 'Article code or barcode' %}</label>
+        <input type="search" id="q" name="q" value="{{ filter.search }}" class="form-control">
+      </div>
+      <div class="col-sm-4 col-lg-2">
+        <label for="employee" class="form-label small mb-1">{% translate 'Employee number' %}</label>
+        <input type="text" id="employee" name="employee" value="{{ filter.employee_text }}" inputmode="numeric" class="form-control">
+      </div>
+      <div class="col-sm-4 col-lg-2">
+        <label for="color" class="form-label small mb-1">{% translate 'Color' %}</label>
+        <input type="text" id="color" name="color" value="{{ filter.color }}" class="form-control">
+      </div>
+      <div class="col-sm-4 col-lg-2">
+        <label for="size" class="form-label small mb-1">{% translate 'Size' %}</label>
+        <input type="text" id="size" name="size" value="{{ filter.size }}" class="form-control">
+      </div>
+      {% if request.user.is_tenant_admin %}
+        <div class="col-sm-6 col-lg-3">
+          <div class="form-check mb-2">
+            <input type="checkbox" id="deleted" name="deleted" value="1" class="form-check-input"{% if filter.include_deleted %} checked{% endif %}>
+            <label for="deleted" class="form-check-label">{% translate 'Show deleted' %}</label>
+          </div>
+        </div>
+      {% endif %}
+      <div class="col-sm-auto ms-auto">
+        <button type="submit" class="btn btn-primary">{% translate 'Filter' %}</button>
+        <a href="{% url 'measurements:list' %}" class="btn btn-link">{% translate 'Reset' %}</a>
+      </div>
+    </div>
+  </form>
+
+  {% if not filter.category %}
+    <div class="alert alert-info">{% translate 'There are no categories yet.' %}</div>
+  {% else %}
+    <div class="table-responsive">
+      <table class="table table-sm table-hover bg-white border align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>{% translate 'Measured at' %}</th>
+            <th>{% translate 'Employee' %}</th>
+            <th>{% translate 'Code' %}</th>
+            <th>{% translate 'Color' %}</th>
+            <th>{% translate 'Size' %}</th>
+            <th>{% translate 'Barcode' %}</th>
+            {% for element in columns %}
+              <th class="text-end">{{ element.name }}<br><span class="fw-normal text-body-secondary small">{{ element.unit }}</span></th>
+            {% endfor %}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for measurement in page_obj %}
+            <tr{% if measurement.deleted_at %} class="text-body-secondary text-decoration-line-through"{% endif %}>
+              <td class="text-nowrap">{{ measurement.measured_at|date:'d.m.Y H:i:s' }}</td>
+              <td>{{ measurement.employee_number }}</td>
+              <td>{{ measurement.article_code }}</td>
+              <td>{{ measurement.article_color }}</td>
+              <td>{{ measurement.article_size }}</td>
+              <td class="font-monospace small">{{ measurement.article_barcode }}</td>
+              {% for value in measurement.element_values %}
+                <td class="text-end">{{ value|default_if_none:'' }}</td>
+              {% endfor %}
+              <td class="text-end text-nowrap">
+                {% if measurement.deleted_at %}<span class="badge text-bg-danger">{% translate 'deleted' %}</span>
+                {% elif measurement.updated_at %}<span class="badge text-bg-warning">{% translate 'corrected' %}</span>{% endif %}
+                <a href="{% url 'measurements:detail' measurement.pk %}?next={{ request.get_full_path|urlencode }}"
+                   class="btn btn-sm btn-outline-primary">{% if request.user.is_tenant_admin and not measurement.deleted_at %}{% translate 'Edit' %}{% else %}{% translate 'Details' %}{% endif %}</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="{{ columns|length|add:7 }}" class="text-center text-body-secondary py-4">{% translate 'No measurements found.' %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="d-flex justify-content-between align-items-center" aria-label="{% translate 'Pages' %}">
+      <span class="text-body-secondary small">
+        {% if page_obj.paginator.count %}
+          {% blocktranslate with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}{{ start }}–{{ end }} of {{ total }}{% endblocktranslate %}
+        {% endif %}
+      </span>
+      {% if page_obj.has_other_pages %}
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.previous_page_number }}">{% translate 'Previous' %}</a></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.next_page_number }}">{% translate 'Next' %}</a></li>
+          {% endif %}
+        </ul>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

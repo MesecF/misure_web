@@ -24,12 +24,14 @@
         <div class="row g-3">
           {% for element, text, element_error in form.rows %}
             <div class="col-sm-6 col-md-4 col-lg-3">
-              <label for="element_{{ element.pk }}" class="form-label mb-1">
-                {{ element.name }} <span class="text-body-secondary">({{ element.unit }})</span>
+              <label for="element_{{ element.pk }}" class="form-label mb-1" title="{{ element.code }} – {{ element.name }}">
+                {% include 'measurements/partials/element_label.html' %}
+                <span class="text-body-secondary">({{ element.unit }})</span>
               </label>
               <input type="text" id="element_{{ element.pk }}" name="element_{{ element.pk }}" value="{{ text }}"
                      class="form-control form-control-lg element-input{% if element_error %} is-invalid{% endif %}"
-                     inputmode="decimal" data-label="{{ element.name }}" data-unit="{{ element.unit }}">
+                     inputmode="decimal" data-code="{{ element.code }}" data-name="{{ element.name }}"
+                     data-unit="{{ element.unit }}">
               {% if element_error %}<div class="invalid-feedback">{{ element_error }}</div>{% endif %}
             </div>
           {% endfor %}
@@ -50,7 +52,9 @@
           <tr>
             <th>{% translate 'Time' %}</th>
             <th>{% translate 'Employee' %}</th>
-            {% for element in form.elements %}<th class="text-end">{{ element.name }}</th>{% endfor %}
+            {% for element in form.elements %}
+              <th class="text-end" title="{{ element.code }} – {{ element.name }}">{% include 'measurements/partials/element_label.html' %}</th>
+            {% endfor %}
           </tr>
         </thead>
         <tbody>

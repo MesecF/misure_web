@@ -6,8 +6,12 @@
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">{% translate 'New measurement' %}</h1>
-    {# tabindex -1: the scanner's and meter's Tab must never land on these buttons #}
-    <div class="d-flex gap-2">
+    {# tabindex -1: the scanner's and meter's Tab must never land on these controls #}
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="form-check form-switch mb-0">
+        <input type="checkbox" id="show-element-names" class="form-check-input" role="switch" tabindex="-1">
+        <label for="show-element-names" class="form-check-label">{% translate 'Show element names' %}</label>
+      </div>
       <button type="button" id="new-article" class="btn btn-outline-primary" tabindex="-1">
         {% translate 'New article' %} <kbd>F2</kbd>
       </button>
@@ -17,7 +21,7 @@
     </div>
   </div>
 
-  <form id="entry-form" method="post" action="{% url 'measurements:entry' %}"
+  <form id="entry-form" class="show-element-codes" method="post" action="{% url 'measurements:entry' %}"
         hx-post="{% url 'measurements:entry' %}" hx-target="#article-panel" hx-disabled-elt="#confirm-save"
         autocomplete="off" novalidate>
     {% csrf_token %}

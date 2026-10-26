@@ -65,38 +65,73 @@ class Article(AuditModel):
 
 
 class Element(AuditModel):
-    """A dimension that is measured on articles of a category."""
+    """A dimension that can be measured. Which elements a category measures is set in CategoryElement."""
 
     tenant = models.ForeignKey(Tenant, on_delete=models.PROTECT, related_name='elements', verbose_name=_('tenant'))
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='elements', verbose_name=_('category'))
     code = models.CharField(_('code'), max_length=20)
     name = models.CharField(_('name'), max_length=100)
     unit = models.CharField(_('unit of measure'), max_length=20)
-    sort_order = models.PositiveIntegerField(_('sort order'), default=0)
     is_active = models.BooleanField(_('active'), default=True)
 
     class Meta:
         db_table = 'element'
-        ordering = ['category__code', 'sort_order', 'code']
+        ordering = ['code']
         verbose_name = _('element')
         verbose_name_plural = _('elements')
         constraints = [
-            models.UniqueConstraint(fields=['category', 'code'], name='element_code_unique_per_category'),
-            # Also applies to inactive elements, so reactivating never causes a clash
-            models.UniqueConstraint(fields=['category', 'sort_order'], name='element_sort_order_unique_per_category'),
+            models.UniqueConstraint(fields=['tenant', 'code'], name='element_code_unique_per_tenant'),
         ]
-
-    SORT_ORDER_STEP = 10
-
-    @classmethod
-    def next_sort_order(cls, category):
-        """Suggested sort order for a new element: the category's highest (incl. inactive) plus a step."""
-        highest = cls.objects.filter(category=category).aggregate(highest=models.Max('sort_order'))['highest']
-        return cls.SORT_ORDER_STEP if highest is None else highest + cls.SORT_ORDER_STEP
 
     def __str__(self):
         return f'{self.code} - {self.name}'
 
+
+class CategoryElement(AuditModel):
+    """An element measured on articles of a category, in the given order."""
+
+    tenant = models.ForeignKey(
+        Tenant, on_delete=models.PROTECT, related_name='category_elements', verbose_name=_('tenant')
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name='category_elements', verbose_name=_('category')
+    )
+    element = models.ForeignKey(
+        Element, on_delete=models.PROTECT, related_name='category_elements', verbose_name=_('element')
+    )
+    sort_order = models.PositiveIntegerField(_('sort order'))
+
+    SORT_ORDER_STEP = 10
+
+    class Meta:
+        db_table = 'category_element'
+        ordering = ['category__code', 'sort_order']
+        verbose_name = _('category element')
+        verbose_name_plural = _('category elements')
+        constraints = [
+            models.UniqueConstraint(fields=['category', 'element'], name='category_element_unique'),
+            models.UniqueConstraint(fields=['category', 'sort_order'], name='category_element_sort_order_unique'),
+        ]
+
+    def __str__(self):
+        return f'{self.category.code}: {self.element.code}'
+
     def clean(self):
-        if self.category_id and self.tenant_id and self.category.tenant_id != self.tenant_id:
-            raise ValidationError({'category': _('Category belongs to a different tenant.')})
+        for name in ['category', 'element']:
+            related = getattr(self, name, None)
+            if related is not None and self.tenant_id and related.tenant_id != self.tenant_id:
+                raise ValidationError({name: _('Belongs to a different tenant.')})
+
+    @classmethod
+    def next_sort_order(cls, category):
+        """Suggested sort order for an element added to the category: the highest plus a step."""
+        highest = cls.objects.filter(category=category).aggregate(highest=models.Max('sort_order'))['highest']
+        return cls.SORT_ORDER_STEP if highest is None else highest + cls.SORT_ORDER_STEP
+
+    @staticmethod
+    def active_elements(category):
+        """Active elements of the category in their sort order (used for measurement entry)."""
+        return [
+            link.element for link in
+            CategoryElement.objects.filter(category=category, element__is_active=True)
+            .select_related('element').order_by('sort_order')
+        ]

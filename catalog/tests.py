@@ -5,7 +5,7 @@ from django.urls import reverse
 from accounts.models import Tenant, User
 
 from .importers import import_articles
-from .models import Article, Category, Element
+from .models import Article, Category, CategoryElement, Element
 from .validators import ean13_is_valid
 
 
@@ -95,83 +95,119 @@ class CategoryViewTests(CatalogTestCase):
 
 
 class ElementViewTests(CatalogTestCase):
-    def element_data(self, **overrides):
-        return {'category': self.category_a.pk, 'code': 'L1', 'name': 'Length', 'unit': 'cm', 'sort_order': 10,
-                **overrides}
-
     def test_create_element(self):
-        response = self.client.post(reverse('catalog:element_create'), self.element_data())
+        data = {'code': 'L1', 'name': 'Length', 'unit': 'cm'}
+        response = self.client.post(reverse('catalog:element_create'), data)
         self.assertRedirects(response, reverse('catalog:element_list'))
         element = Element.objects.get(code='L1')
-        self.assertEqual((element.tenant, element.category, element.created_by),
-                         (self.tenant_a, self.category_a, self.admin_a))
+        self.assertEqual((element.tenant, element.created_by), (self.tenant_a, self.admin_a))
 
-    def test_category_of_other_tenant_cannot_be_chosen(self):
-        response = self.client.post(reverse('catalog:element_create'), self.element_data(category=self.category_b.pk))
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(Element.objects.exists())
+    def test_duplicate_code_in_tenant_is_rejected_but_allowed_in_other_tenant(self):
+        data = {'code': 'L1', 'name': 'Length', 'unit': 'cm'}
+        self.client.post(reverse('catalog:element_create'), data)
+        response = self.client.post(reverse('catalog:element_create'), {**data, 'name': 'Other'})
+        self.assertContains(response, 'An element with this code already exists.')
+        self.client.force_login(self.admin_b)
+        self.assertRedirects(self.client.post(reverse('catalog:element_create'), data),
+                             reverse('catalog:element_list'))
 
-    def test_inactive_category_is_not_offered_for_new_elements(self):
-        self.category_a.is_active = False
-        self.category_a.save()
-        response = self.client.get(reverse('catalog:element_create'))
-        self.assertNotIn(self.category_a, response.context['form'].fields['category'].queryset)
-
-    def test_duplicate_code_within_category_is_rejected(self):
-        self.client.post(reverse('catalog:element_create'), self.element_data())
-        response = self.client.post(reverse('catalog:element_create'), self.element_data(name='Other'))
-        self.assertContains(response, 'This category already has an element with this code.')
-
-    def test_list_filters(self):
-        category_2 = Category.objects.create(tenant=self.tenant_a, code='ADI', name='Adidas', created_by=self.admin_a)
+    def test_list_status_filter(self):
         common = {'tenant': self.tenant_a, 'unit': 'cm', 'created_by': self.admin_a}
-        Element.objects.create(category=self.category_a, code='L1', name='Length', sort_order=10, **common)
-        Element.objects.create(category=self.category_a, code='W1', name='Width', sort_order=20, is_active=False, **common)
-        Element.objects.create(category=category_2, code='L1', name='Length', sort_order=10, **common)
+        Element.objects.create(code='L1', name='Length', **common)
+        Element.objects.create(code='W1', name='Width', is_active=False, **common)
         url = reverse('catalog:element_list')
 
         def codes(params):
-            return [(e.category.code, e.code) for e in self.client.get(url, params).context['object_list']]
+            return [e.code for e in self.client.get(url, params).context['object_list']]
 
-        self.assertEqual(codes({}), [('ADI', 'L1'), ('NIKE', 'L1')])
-        self.assertEqual(codes({'category': self.category_a.pk, 'status': 'all'}), [('NIKE', 'L1'), ('NIKE', 'W1')])
-        self.assertEqual(codes({'status': 'inactive'}), [('NIKE', 'W1')])
+        self.assertEqual(codes({}), ['L1'])
+        self.assertEqual(codes({'status': 'inactive'}), ['W1'])
+        self.assertEqual(codes({'status': 'all'}), ['L1', 'W1'])
 
-    def test_duplicate_sort_order_within_category_is_rejected(self):
-        self.client.post(reverse('catalog:element_create'), self.element_data())
-        response = self.client.post(reverse('catalog:element_create'), self.element_data(code='W1'))
+    def test_regular_user_is_denied(self):
+        self.client.force_login(self.user_a)
+        self.assertEqual(self.client.get(reverse('catalog:element_list')).status_code, 403)
+
+
+class CategoryElementTests(CatalogTestCase):
+    def setUp(self):
+        super().setUp()
+        common = {'tenant': self.tenant_a, 'unit': 'cm', 'created_by': self.admin_a}
+        self.length = Element.objects.create(code='L', name='Length', **common)
+        self.width = Element.objects.create(code='W', name='Width', **common)
+        self.url = reverse('catalog:category_elements', args=[self.category_a.pk])
+
+    def add(self, element, sort_order):
+        return self.client.post(self.url, {'element': element.pk, 'sort_order': sort_order})
+
+    def test_add_element_to_category(self):
+        self.assertRedirects(self.add(self.length, 10), self.url)
+        link = CategoryElement.objects.get()
+        self.assertEqual((link.tenant, link.category, link.element, link.sort_order, link.created_by),
+                         (self.tenant_a, self.category_a, self.length, 10, self.admin_a))
+
+    def test_same_element_in_several_categories_with_own_order(self):
+        category_2 = Category.objects.create(tenant=self.tenant_a, code='ADI', name='Adidas', created_by=self.admin_a)
+        self.add(self.length, 10)
+        self.client.post(reverse('catalog:category_elements', args=[category_2.pk]),
+                         {'element': self.length.pk, 'sort_order': 50})
+        self.assertEqual(sorted(CategoryElement.objects.values_list('category__code', 'sort_order')),
+                         [('ADI', 50), ('NIKE', 10)])
+
+    def test_suggested_sort_order(self):
+        self.assertEqual(self.client.get(self.url).context['form']['sort_order'].value(), 10)
+        self.add(self.length, 35)
+        self.assertEqual(self.client.get(self.url).context['form']['sort_order'].value(), 45)
+
+    def test_element_already_in_category_and_inactive_elements_are_not_offered(self):
+        self.add(self.length, 10)
+        Element.objects.create(tenant=self.tenant_a, code='X', name='Old', unit='cm', is_active=False,
+                               created_by=self.admin_a)
+        offered = list(self.client.get(self.url).context['form'].fields['element'].queryset)
+        self.assertEqual(offered, [self.width])
+
+    def test_other_tenants_element_cannot_be_added(self):
+        other = Element.objects.create(tenant=self.tenant_b, code='L', name='Length', unit='cm',
+                                       created_by=self.admin_b)
+        response = self.add(other, 10)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(CategoryElement.objects.exists())
+
+    def test_duplicate_sort_order_is_rejected(self):
+        self.add(self.length, 10)
+        response = self.add(self.width, 10)
         self.assertContains(response, 'This category already has an element with this sort order.')
 
-    def test_same_sort_order_in_other_category_is_allowed(self):
-        category_2 = Category.objects.create(tenant=self.tenant_a, code='ADI', name='Adidas', created_by=self.admin_a)
-        self.client.post(reverse('catalog:element_create'), self.element_data())
-        response = self.client.post(reverse('catalog:element_create'), self.element_data(category=category_2.pk))
-        self.assertRedirects(response, reverse('catalog:element_list'))
+    def test_change_sort_order(self):
+        self.add(self.length, 10)
+        self.add(self.width, 20)
+        link = CategoryElement.objects.get(element=self.length)
+        url = reverse('catalog:category_element_update', args=[link.pk])
+        self.client.post(url, {'sort_order': 30})
+        link.refresh_from_db()
+        self.assertEqual((link.sort_order, link.updated_by), (30, self.admin_a))
+        # A sort order taken by another element is refused
+        self.client.post(url, {'sort_order': 20})
+        link.refresh_from_db()
+        self.assertEqual(link.sort_order, 30)
 
-    def test_editing_element_keeps_its_own_sort_order(self):
-        self.client.post(reverse('catalog:element_create'), self.element_data())
-        element = Element.objects.get(code='L1')
-        url = reverse('catalog:element_update', args=[element.pk])
-        response = self.client.post(url, self.element_data(name='Total length'))
-        self.assertRedirects(response, reverse('catalog:element_list'))
+    def test_remove_element_from_category(self):
+        self.add(self.length, 10)
+        link = CategoryElement.objects.get()
+        self.assertRedirects(self.client.post(reverse('catalog:category_element_delete', args=[link.pk])), self.url)
+        self.assertFalse(CategoryElement.objects.exists())
+        self.assertTrue(Element.objects.filter(pk=self.length.pk).exists())
 
-    def test_next_sort_order_counts_inactive_elements(self):
-        self.assertEqual(Element.next_sort_order(self.category_a), 10)
-        Element.objects.create(tenant=self.tenant_a, category=self.category_a, code='X', name='X', unit='cm',
-                               sort_order=35, is_active=False, created_by=self.admin_a)
-        self.assertEqual(Element.next_sort_order(self.category_a), 45)
+    def test_other_tenants_category_is_not_found(self):
+        self.assertEqual(
+            self.client.get(reverse('catalog:category_elements', args=[self.category_b.pk])).status_code, 404)
 
-    def test_new_element_form_suggests_sort_order_for_category_from_filter(self):
-        response = self.client.get(reverse('catalog:element_create'), {'category': self.category_a.pk})
-        self.assertEqual(response.context['form']['sort_order'].value(), 10)
-
-    def test_next_sort_order_endpoint(self):
-        Element.objects.create(tenant=self.tenant_a, category=self.category_a, code='X', name='X', unit='cm',
-                               sort_order=20, created_by=self.admin_a)
-        url = reverse('catalog:element_next_sort_order')
-        self.assertContains(self.client.get(url, {'category': self.category_a.pk}), 'value="30"')
-        # Another tenant's category is ignored
-        self.assertNotContains(self.client.get(url, {'category': self.category_b.pk}), 'value=')
+    def test_active_elements_in_sort_order(self):
+        self.add(self.width, 10)
+        self.add(self.length, 20)
+        self.assertEqual(CategoryElement.active_elements(self.category_a), [self.width, self.length])
+        Element.objects.filter(pk=self.width.pk).update(is_active=False)
+        self.assertEqual(CategoryElement.active_elements(self.category_a), [self.length])
 
 
 class ArticleImportTests(CatalogTestCase):

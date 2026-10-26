@@ -32,6 +32,7 @@
               {% endif %}
             </td>
             <td class="text-end text-nowrap">
+              <a href="{% url 'catalog:category_elements' category.pk %}" class="btn btn-sm btn-outline-primary">{% translate 'Elements' %}</a>
               <a href="{% url 'catalog:category_update' category.pk %}" class="btn btn-sm btn-outline-primary">{% translate 'Edit' %}</a>
               {% url 'catalog:category_toggle_active' category.pk as action %}
               {% include 'partials/toggle_active.html' with record=category action=action %}
