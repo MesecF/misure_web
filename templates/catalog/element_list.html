@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Elements' %} · Misure{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">{% translate 'Elements' %}</h1>
+    <a href="{% url 'catalog:element_create' %}{% if category_filter %}?category={{ category_filter }}{% endif %}"
+       class="btn btn-primary">{% translate 'New element' %}</a>
+  </div>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-sm-auto">
+      <select name="category" class="form-select" aria-label="{% translate 'Category' %}" onchange="this.form.submit()">
+        <option value="">{% translate 'All categories' %}</option>
+        {% for category in categories %}
+          <option value="{{ category.pk }}"{% if category_filter == category.pk|stringformat:'d' %} selected{% endif %}>{{ category }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-auto">
+      <select name="status" class="form-select" aria-label="{% translate 'Status' %}" onchange="this.form.submit()">
+        <option value="active"{% if status_filter == 'active' %} selected{% endif %}>{% translate 'Active' %}</option>
+        <option value="inactive"{% if status_filter == 'inactive' %} selected{% endif %}>{% translate 'Inactive' %}</option>
+        <option value="all"{% if status_filter == 'all' %} selected{% endif %}>{% translate 'All' %}</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-hover bg-white border align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>{% translate 'Category' %}</th>
+          <th class="text-end">{% translate 'Order' %}</th>
+          <th>{% translate 'Code' %}</th>
+          <th>{% translate 'Name' %}</th>
+          <th>{% translate 'Unit' %}</th>
+          <th>{% translate 'Status' %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for element in object_list %}
+          <tr{% if not element.is_active %} class="text-body-secondary"{% endif %}>
+            <td>{{ element.category.code }}</td>
+            <td class="text-end">{{ element.sort_order }}</td>
+            <td>{{ element.code }}</td>
+            <td>{{ element.name }}</td>
+            <td>{{ element.unit }}</td>
+            <td>
+              {% if element.is_active %}
+                <span class="badge text-bg-success">{% translate 'Active' %}</span>
+              {% else %}
+                <span class="badge text-bg-secondary">{% translate 'Inactive' %}</span>
+              {% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'catalog:element_update' element.pk %}" class="btn btn-sm btn-outline-primary">{% translate 'Edit' %}</a>
+              {% url 'catalog:element_toggle_active' element.pk as action %}
+              {% include 'partials/toggle_active.html' with record=element action=action %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-body-secondary py-4">{% translate 'No elements found.' %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

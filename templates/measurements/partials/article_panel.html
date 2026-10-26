@@ -1,0 +1,72 @@
+{% load i18n %}
+{% if error %}
+  <div class="alert alert-danger" data-focus="{{ error_field }}">{{ error }}</div>
+{% endif %}
+
+{% if article %}
+  <div class="card mb-4">
+    <div class="card-header d-flex flex-wrap gap-3">
+      <strong>{{ article.code }}</strong>
+      <span>{% translate 'Color' %}: <strong>{{ article.color }}</strong></span>
+      <span>{% translate 'Size' %}: <strong>{{ article.size }}</strong></span>
+      <span>{% translate 'Category' %}: <strong>{{ article.category.code }}</strong></span>
+      <span class="font-monospace text-body-secondary ms-auto">{{ article.barcode }}</span>
+    </div>
+    <div class="card-body">
+      {% if saved %}
+        <div class="alert alert-success py-2">
+          {% blocktranslate with time=saved.measured_at|time:'H:i:s' %}Measurement saved at {{ time }}. Next measurement of the same article:{% endblocktranslate %}
+        </div>
+      {% endif %}
+      {% if form.error %}<div class="alert alert-danger py-2">{{ form.error }}</div>{% endif %}
+
+      {% if form.elements %}
+        <div class="row g-3">
+          {% for element, text, element_error in form.rows %}
+            <div class="col-sm-6 col-md-4 col-lg-3">
+              <label for="element_{{ element.pk }}" class="form-label mb-1">
+                {{ element.name }} <span class="text-body-secondary">({{ element.unit }})</span>
+              </label>
+              <input type="text" id="element_{{ element.pk }}" name="element_{{ element.pk }}" value="{{ text }}"
+                     class="form-control form-control-lg element-input{% if element_error %} is-invalid{% endif %}"
+                     inputmode="decimal" data-label="{{ element.name }}" data-unit="{{ element.unit }}">
+              {% if element_error %}<div class="invalid-feedback">{{ element_error }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-warning mb-0">
+          {% blocktranslate with category=article.category.code %}No elements are defined for category {{ category }}.{% endblocktranslate %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 class="h5">{% translate "Today's measurements of this article" %}</h2>
+  {% if todays_measurements %}
+    <div class="table-responsive">
+      <table class="table table-sm table-striped bg-white border align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>{% translate 'Time' %}</th>
+            <th>{% translate 'Employee' %}</th>
+            {% for element in form.elements %}<th class="text-end">{{ element.name }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for measurement in todays_measurements %}
+            <tr>
+              <td>{{ measurement.measured_at|time:'H:i:s' }}</td>
+              <td>{{ measurement.employee_number }}</td>
+              {% for value in measurement.element_values %}
+                <td class="text-end">{{ value|default_if_none:'' }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">{% translate 'No measurements yet today.' %}</p>
+  {% endif %}
+{% endif %}

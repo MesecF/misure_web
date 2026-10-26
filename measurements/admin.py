@@ -18,9 +18,9 @@ class MeasurementValueInline(admin.TabularInline):
 
 @admin.register(Measurement)
 class MeasurementAdmin(ReadOnlyAdmin):
-    list_display = ('measured_at', 'article_code', 'article_color', 'article_size', 'brand_code',
+    list_display = ('measured_at', 'article_code', 'article_color', 'article_size', 'category_code',
                     'employee_number', 'tenant', 'deleted_at')
-    list_filter = ('tenant', 'brand_code')
+    list_filter = ('tenant', 'category_code')
     search_fields = ('article_code', 'article_barcode', 'employee_number')
     date_hierarchy = 'measured_at'
     inlines = [MeasurementValueInline]

@@ -32,5 +32,5 @@ Tests: `.\.venv\Scripts\python.exe manage.py test`
 - **Superadmin** (no tenant): logs into Django admin, creates tenants and their users.
 - Each tenant has exactly one **admin** and one **user** account. Usernames are unique per tenant,
   so two tenants can both have a user called `admin`.
-- Tenant data (brands, articles, elements, measurements) is read-only in Django admin; it is
+- Tenant data (categories, articles, elements, measurements) is read-only in Django admin; it is
   maintained by tenant admins in the application.

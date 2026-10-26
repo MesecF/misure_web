@@ -1,0 +1,9 @@
+{% load i18n %}
+{% if object.pk %}
+  <p class="small text-body-secondary mb-0">
+    {% blocktranslate with user=object.created_by.username date=object.created_at|date:'SHORT_DATETIME_FORMAT' %}Created by {{ user }}, {{ date }}.{% endblocktranslate %}
+    {% if object.updated_at %}
+      {% blocktranslate with user=object.updated_by.username date=object.updated_at|date:'SHORT_DATETIME_FORMAT' %}Last changed by {{ user }}, {{ date }}.{% endblocktranslate %}
+    {% endif %}
+  </p>
+{% endif %}

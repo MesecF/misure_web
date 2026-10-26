@@ -48,13 +48,21 @@ AUTHENTICATION_BACKENDS = ['accounts.backends.TenantModelBackend']
 # Usernames are unique per tenant (enforced by constraints), which TenantModelBackend handles
 SILENCED_SYSTEM_CHECKS = ['auth.W004']
 
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'accounts.middleware.DefaultLanguageMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Every page requires login unless the view is marked with login_not_required
+    'django.contrib.auth.middleware.LoginRequiredMiddleware',
+    'accounts.middleware.TenantMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

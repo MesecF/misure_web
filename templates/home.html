@@ -2,6 +2,8 @@
 {% load i18n %}
 
 {% block content %}
-  <h1 class="h3">Misure</h1>
-  <p class="text-body-secondary">{% translate 'Project skeleton is running.' %}</p>
+  <h1 class="h3">{{ request.tenant.name }}</h1>
+  <p class="text-body-secondary">
+    {% blocktranslate with username=request.user.username %}Logged in as {{ username }}.{% endblocktranslate %}
+  </p>
 {% endblock %}

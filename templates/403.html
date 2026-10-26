@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Access denied' %} · Misure{% endblock %}
+
+{% block content %}
+  <h1 class="h3">{% translate 'Access denied' %}</h1>
+  <p>{% translate 'This page is available only to the company administrator.' %}</p>
+  <a href="{% url 'home' %}" class="btn btn-primary">{% translate 'Back to start page' %}</a>
+{% endblock %}

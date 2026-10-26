@@ -1,0 +1,10 @@
+{% load i18n %}
+<form action="{{ action }}" method="post" class="d-inline">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  {% if record.is_active %}
+    <button type="submit" class="btn btn-sm btn-outline-secondary">{% translate 'Deactivate' %}</button>
+  {% else %}
+    <button type="submit" class="btn btn-sm btn-outline-success">{% translate 'Activate' %}</button>
+  {% endif %}
+</form>

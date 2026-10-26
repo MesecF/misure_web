@@ -8,11 +8,63 @@
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="bg-body-tertiary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% block navbar %}
+    {% if request.tenant %}
+      <nav class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
+        <div class="container">
+          <a class="navbar-brand" href="{% url 'home' %}">Misure</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                  aria-controls="mainNav" aria-expanded="false" aria-label="{% translate 'Menu' %}">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="mainNav">
+            {# Links are enabled as their pages are built in later phases #}
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item"><a class="nav-link" href="{% url 'measurements:entry' %}">{% translate 'New measurement' %}</a></li>
+              <li class="nav-item"><span class="nav-link disabled">{% translate 'Measurements' %}</span></li>
+              {% if request.user.is_tenant_admin %}
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                     aria-expanded="false">{% translate 'Administration' %}</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'catalog:category_list' %}">{% translate 'Categories' %}</a></li>
+                    <li><a class="dropdown-item" href="{% url 'catalog:element_list' %}">{% translate 'Elements' %}</a></li>
+                    <li><a class="dropdown-item" href="{% url 'catalog:article_list' %}">{% translate 'Articles' %}</a></li>
+                  </ul>
+                </li>
+              {% endif %}
+            </ul>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <span class="navbar-text">
+                <strong>{{ request.tenant.name }}</strong> ·
+                {{ request.user.username }}
+                <span class="badge text-bg-secondary">{{ request.user.get_role_display }}</span>
+              </span>
+              {% include 'partials/language_switch.html' %}
+              <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-light btn-sm">{% translate 'Log out' %}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    {% endif %}
+  {% endblock %}
+
   <main class="container py-4">
+    {% for message in messages %}
+      <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button>
+      </div>
+    {% endfor %}
     {% block content %}{% endblock %}
   </main>
+
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

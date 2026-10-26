@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% translate 'New measurement' %} · Misure{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{% translate 'New measurement' %}</h1>
+    {# tabindex -1: the scanner's and meter's Tab must never land on these buttons #}
+    <div class="d-flex gap-2">
+      <button type="button" id="new-article" class="btn btn-outline-primary" tabindex="-1">
+        {% translate 'New article' %} <kbd>F2</kbd>
+      </button>
+      <button type="button" id="change-employee" class="btn btn-outline-secondary" tabindex="-1">
+        {% translate 'Change employee' %} <kbd>F3</kbd>
+      </button>
+    </div>
+  </div>
+
+  <form id="entry-form" method="post" action="{% url 'measurements:entry' %}"
+        hx-post="{% url 'measurements:entry' %}" hx-target="#article-panel" hx-disabled-elt="#confirm-save"
+        autocomplete="off" novalidate>
+    {% csrf_token %}
+    <div class="row g-3 mb-3">
+      <div class="col-sm-4 col-lg-3">
+        <label for="employee_number" class="form-label">{% translate 'Employee number' %}</label>
+        <input type="text" id="employee_number" name="employee_number" value="{{ employee_number }}"
+               class="form-control form-control-lg" inputmode="numeric"{% if not employee_number %} autofocus{% endif %}>
+      </div>
+      <div class="col-sm-8 col-lg-5">
+        <label for="barcode" class="form-label">{% translate 'Barcode' %}</label>
+        <input type="text" id="barcode" name="barcode" class="form-control form-control-lg font-monospace"
+               inputmode="numeric"{% if employee_number %} autofocus{% endif %}
+               hx-get="{% url 'measurements:article_panel' %}" hx-trigger="change"
+               hx-include="#employee_number, #barcode" hx-target="#article-panel">
+      </div>
+    </div>
+
+    <div id="article-panel" data-server-error="{% translate 'Server error, the measurement was not saved. Please try again.' %}"></div>
+  </form>
+
+  <div class="modal" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="confirm-title">{% translate 'Save measurement?' %}</h2>
+        </div>
+        <div class="modal-body">
+          <table class="table table-sm mb-0"><tbody id="confirm-summary"></tbody></table>
+          <p id="confirm-empty" class="text-danger mb-0" hidden>{% translate 'No values entered.' %}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            {% translate 'Back' %} <kbd>Esc</kbd>
+          </button>
+          <button type="button" id="confirm-save" class="btn btn-primary">
+            {% translate 'Save' %} <kbd>Enter</kbd>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/measurement_entry.js' %}"></script>
+{% endblock %}

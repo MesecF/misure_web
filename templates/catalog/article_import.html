@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Import articles' %} · Misure{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-3">{% translate 'Import articles' %}</h1>
+
+  {% if result %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5">{% translate 'Import result' %}</h2>
+        <div class="d-flex flex-wrap gap-2 mb-0">
+          <span class="badge text-bg-success fs-6">{% translate 'New' %}: {{ result.created }}</span>
+          <span class="badge text-bg-primary fs-6">{% translate 'Updated' %}: {{ result.updated }}</span>
+          <span class="badge text-bg-secondary fs-6">{% translate 'Unchanged' %}: {{ result.unchanged }}</span>
+          <span class="badge {% if result.rejected %}text-bg-danger{% else %}text-bg-light border{% endif %} fs-6">{% translate 'Rejected' %}: {{ result.rejected|length }}</span>
+        </div>
+      </div>
+      {% if result.rejected %}
+        <div class="table-responsive">
+          <table class="table table-sm mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th class="text-end">{% translate 'Line' %}</th>
+                <th>{% translate 'Content' %}</th>
+                <th>{% translate 'Reason' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result.rejected %}
+                <tr>
+                  <td class="text-end">{{ row.line }}</td>
+                  <td class="font-monospace small">{{ row.content }}</td>
+                  <td class="text-danger">{{ row.reasons|join:' ' }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include 'partials/form_fields.html' %}
+            <button type="submit" class="btn btn-primary">{% translate 'Import' %}</button>
+            <a href="{% url 'catalog:article_list' %}" class="btn btn-link">{% translate 'Back to articles' %}</a>
+          </form>
+        </div>
+        <div class="card-footer small">
+          <p class="mb-1"><strong>{% translate 'File format' %}</strong></p>
+          <ul class="mb-1">
+            <li>{% translate 'Columns separated by a semicolon (;), in this order:' %}
+              <code>{% translate 'code' %};{% translate 'color' %};{% translate 'size' %};{% translate 'category code' %};{% translate 'barcode' %}</code></li>
+            <li>{% translate 'The first row is a header and is ignored.' %}</li>
+            <li>{% translate 'All columns are required. Category codes are matched regardless of upper or lower case.' %}</li>
+            <li>{% translate 'Code, color and size are saved in upper case.' %}</li>
+            <li>{% translate 'Each barcode and each combination of code, color and size may exist only once.' %}</li>
+            <li>{% translate 'An existing barcode updates that article; rows with errors are skipped and listed.' %}</li>
+            <li>{% translate 'In Excel, format the barcode column as text, otherwise leading zeros or digits can be lost.' %}</li>
+          </ul>
+          <p class="mb-0">{% translate 'Example' %}: <code>{% translate 'code' %};{% translate 'color' %};{% translate 'size' %};{% translate 'category' %};{% translate 'barcode' %}</code> / <code>ART001;BLACK;M;NIKE;4006381333931</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
