@@ -6,7 +6,7 @@
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">
-      {% translate 'Measurement' %} {{ measurement.measured_at|date:'d.m.Y H:i:s' }}
+      {% translate 'Measurement' %} {{ measurement.measured_at|date:'SHORT_DATETIME_FORMAT' }}
       {% if measurement.deleted_at %}<span class="badge text-bg-danger align-middle">{% translate 'deleted' %}</span>{% endif %}
     </h1>
     <a href="{{ next }}" class="btn btn-link">{% translate 'Back to measurements' %}</a>
@@ -68,12 +68,12 @@
     <div class="col-lg-4">
       <div class="card mb-3">
         <div class="card-body small">
-          <p class="mb-1">{% translate 'Entered by' %}: <strong>{{ measurement.created_by.username }}</strong>, {{ measurement.created_at|date:'d.m.Y H:i:s' }}</p>
+          <p class="mb-1">{% translate 'Entered by' %}: <strong>{{ measurement.created_by.username }}</strong>, {{ measurement.created_at|date:'SHORT_DATETIME_FORMAT' }}</p>
           {% if measurement.updated_at %}
-            <p class="mb-1">{% translate 'Last corrected by' %}: <strong>{{ measurement.updated_by.username }}</strong>, {{ measurement.updated_at|date:'d.m.Y H:i:s' }}</p>
+            <p class="mb-1">{% translate 'Last corrected by' %}: <strong>{{ measurement.updated_by.username }}</strong>, {{ measurement.updated_at|date:'SHORT_DATETIME_FORMAT' }}</p>
           {% endif %}
           {% if measurement.deleted_at %}
-            <p class="mb-0">{% translate 'Deleted by' %}: <strong>{{ measurement.deleted_by.username }}</strong>, {{ measurement.deleted_at|date:'d.m.Y H:i:s' }}</p>
+            <p class="mb-0">{% translate 'Deleted by' %}: <strong>{{ measurement.deleted_by.username }}</strong>, {{ measurement.deleted_at|date:'SHORT_DATETIME_FORMAT' }}</p>
           {% endif %}
         </div>
       </div>

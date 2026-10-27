@@ -16,10 +16,13 @@ def parse_date(text, default):
         return default
 
 
+ALL_CATEGORIES = 'all'
+
+
 class MeasurementFilter:
     """
-    Reads the filters from the query string. The category is required, because each
-    category has its own elements (the value columns); the first active one is the default.
+    Reads the filters from the query string. Each category has its own elements (the value
+    columns); the first active one is the default. category=all shows every category.
     """
 
     def __init__(self, request):
@@ -39,21 +42,27 @@ class MeasurementFilter:
 
         self.categories = list(Category.objects.filter(tenant=self.tenant).order_by('-is_active', 'code'))
         category_id = params.get('category', '')
-        self.category = next((c for c in self.categories if str(c.pk) == category_id), None)
-        if self.category is None:
-            self.category = next((c for c in self.categories if c.is_active), None)
+        self.all_categories = category_id == ALL_CATEGORIES and bool(self.categories)
+        self.category = None
+        if not self.all_categories:
+            self.category = next((c for c in self.categories if str(c.pk) == category_id), None)
+            if self.category is None:
+                self.category = next((c for c in self.categories if c.is_active), None)
+
+    @property
+    def selected(self):
+        """A category or all categories is selected; False when the tenant has no (active) categories."""
+        return self.all_categories or self.category is not None
 
     def queryset(self):
-        if self.category is None:
+        if not self.selected:
             return Measurement.objects.none()
         start = timezone.make_aware(datetime.combine(self.date_from, time.min))
         end = timezone.make_aware(datetime.combine(self.date_to, time.max))
-        # Article and category data as they were when measured
-        measurements = Measurement.objects.filter(
-            tenant=self.tenant,
-            category_code__iexact=self.category.code,
-            measured_at__range=(start, end),
-        )
+        measurements = Measurement.objects.filter(tenant=self.tenant, measured_at__range=(start, end))
+        if self.category:
+            # Article and category data as they were when measured
+            measurements = measurements.filter(category_code__iexact=self.category.code)
         if self.search:
             measurements = measurements.filter(article_code__icontains=self.search) | measurements.filter(
                 article_barcode__icontains=self.search)
@@ -71,11 +80,19 @@ class MeasurementFilter:
         """
         Elements shown as value columns: the category's elements in their order, then
         elements removed from the category or deactivated that have values in the result.
+        For all categories: only elements with values, ordered by category code and the order in it.
         """
         used = set(MeasurementValue.objects.filter(measurement__in=measurements)
                    .values_list('element_id', flat=True).distinct())
-        links = CategoryElement.objects.filter(category=self.category).select_related('element').order_by('sort_order')
-        columns = [link.element for link in links if link.element.is_active or link.element.pk in used]
+        if self.all_categories:
+            links = CategoryElement.objects.filter(tenant=self.tenant, element__in=used)
+        else:
+            links = CategoryElement.objects.filter(category=self.category)
+        links = links.select_related('element').order_by('category__code', 'sort_order')
+        columns = []
+        for link in links:
+            if (link.element.is_active or link.element.pk in used) and link.element not in columns:
+                columns.append(link.element)
         shown = {element.pk for element in columns}
         columns += list(Element.objects.filter(pk__in=used - shown).order_by('code'))
         return columns

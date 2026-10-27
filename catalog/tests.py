@@ -1,6 +1,9 @@
+from io import BytesIO
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from openpyxl import load_workbook
 
 from accounts.models import Tenant, User
 
@@ -365,3 +368,29 @@ class ArticleViewTests(CatalogTestCase):
     def test_category_code_is_unique_regardless_of_case(self):
         response = self.client.post(reverse('catalog:category_create'), {'code': 'nike', 'name': 'Lowercase'})
         self.assertContains(response, 'A category with this code already exists.')
+
+    def test_export_follows_list_filters(self):
+        import_articles(b'h\nA1;BLACK;M;NIKE;4006381333931\nB2;BLACK;M;NIKE;5901234123457\n',
+                        self.tenant_a, self.admin_a)
+        import_articles(b'h\nC3;RED;S;NIKE;9780201379624\n', self.tenant_b, self.admin_b)
+        Article.objects.filter(code='B2').update(is_active=False)
+
+        response = self.client.get(reverse('catalog:article_export', args=['xlsx']), {'status': 'all'})
+        rows = list(load_workbook(BytesIO(response.content)).active.values)
+        self.assertEqual(rows[0][:7], ('Code', 'Color', 'Size', 'Category', 'Category name', 'Barcode', 'Active'))
+        self.assertEqual([row[:7] for row in rows[1:]], [
+            ('A1', 'BLACK', 'M', 'NIKE', 'Nike', '4006381333931', 'Yes'),
+            ('B2', 'BLACK', 'M', 'NIKE', 'Nike', '5901234123457', 'No'),
+        ])
+        self.assertEqual(rows[1][7], 'admin')
+
+        response = self.client.get(reverse('catalog:article_export', args=['csv']))
+        lines = response.content.decode('utf-8-sig').strip().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertTrue(lines[1].startswith('A1;BLACK;M;NIKE;Nike;4006381333931;Yes;admin;'))
+
+    def test_regular_user_cannot_export(self):
+        self.client.force_login(self.user_a)
+        self.assertEqual(self.client.get(reverse('catalog:article_export', args=['csv'])).status_code, 403)
+        self.client.force_login(self.admin_a)
+        self.assertEqual(self.client.get(reverse('catalog:article_export', args=['pdf'])).status_code, 404)

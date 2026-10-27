@@ -5,3 +5,26 @@
 .show-element-names .element-code {
   display: none;
 }
+
+/* Measurement list filters: only as wide as their content needs */
+.filter-date {
+  width: 9.5rem;
+}
+
+.filter-category {
+  width: 14rem;
+}
+
+.filter-search {
+  width: 13rem;
+}
+
+.filter-short {
+  width: 8rem;
+}
+
+/* Measurement entry: all elements in one row, equal widths; scrolls sideways when they do not fit */
+.element-cell {
+  flex: 1 1 0;
+  min-width: 7rem;
+}

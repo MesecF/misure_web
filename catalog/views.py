@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -10,6 +11,7 @@ from django.views.generic import CreateView, FormView, ListView, UpdateView
 
 from accounts.mixins import TenantAdminRequiredMixin, TenantAuditFormMixin, TenantQuerysetMixin
 
+from .export import to_csv, to_xlsx
 from .forms import ArticleForm, ArticleImportForm, CategoryElementForm, CategoryForm, ElementForm
 from .importers import import_articles
 from .models import Article, Category, CategoryElement, Element
@@ -168,6 +170,19 @@ class CategoryElementDeleteView(TenantAdminRequiredMixin, View):
 
 # Articles
 
+def filter_articles(articles, search, category_filter, status_filter):
+    """The article list's filters, also used by its export."""
+    if search:
+        articles = articles.filter(Q(code__icontains=search) | Q(barcode__icontains=search))
+    if category_filter.isdigit():
+        articles = articles.filter(category_id=category_filter)
+    if status_filter == 'active':
+        articles = articles.filter(is_active=True)
+    elif status_filter == 'inactive':
+        articles = articles.filter(is_active=False)
+    return articles
+
+
 class ArticleListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
     model = Article
     paginate_by = 50
@@ -177,15 +192,7 @@ class ArticleListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
         self.search = self.request.GET.get('q', '').strip()
         self.category_filter = self.request.GET.get('category', '')
         self.status_filter = self.request.GET.get('status', 'active')
-        if self.search:
-            articles = articles.filter(Q(code__icontains=self.search) | Q(barcode__icontains=self.search))
-        if self.category_filter.isdigit():
-            articles = articles.filter(category_id=self.category_filter)
-        if self.status_filter == 'active':
-            articles = articles.filter(is_active=True)
-        elif self.status_filter == 'inactive':
-            articles = articles.filter(is_active=False)
-        return articles
+        return filter_articles(articles, self.search, self.category_filter, self.status_filter)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -198,6 +205,21 @@ class ArticleListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
         query.pop('page', None)
         context['filter_query'] = query.urlencode()
         return context
+
+
+class ArticleExportView(TenantAdminRequiredMixin, View):
+    """Exports all articles matching the list's filters (not only the current page)."""
+
+    def get(self, request, file_format):
+        if file_format not in ('xlsx', 'csv'):
+            raise Http404
+        params = request.GET
+        articles = Article.objects.filter(tenant=request.tenant).select_related('category', 'created_by', 'updated_by')
+        articles = filter_articles(articles, params.get('q', '').strip(), params.get('category', ''),
+                                   params.get('status', 'active'))
+        filename = f'articles_{timezone.localdate()}'
+        export = to_xlsx if file_format == 'xlsx' else to_csv
+        return export(articles, filename)
 
 
 class ArticleCreateView(TenantAdminRequiredMixin, TenantAuditFormMixin, SaveMessageMixin, CreateView):

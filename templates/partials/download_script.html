@@ -1,0 +1,5 @@
+{% load static i18n %}
+{# For export links marked data-download; the page needs an element with id download-message #}
+{% translate 'Preparing file…' as busy_text %}
+{% translate 'The export failed. Please try again.' as error_text %}
+<script src="{% static 'js/download.js' %}" data-busy-text="{{ busy_text }}" data-error-text="{{ error_text }}"></script>

@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Misure{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  {% block styles %}{% endblock %}
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="bg-body-tertiary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

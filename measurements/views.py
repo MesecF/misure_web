@@ -5,6 +5,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import get_format
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
@@ -102,6 +103,7 @@ class MeasurementListView(TenantRequiredMixin, View):
             'columns': columns,
             'page_obj': page,
             'filter_query': query.urlencode(),
+            'date_format': get_format('SHORT_DATE_FORMAT'),
         })
 
 
@@ -115,10 +117,15 @@ class MeasurementExportView(TenantRequiredMixin, View):
         measurements = measurement_filter.queryset()
         columns = measurement_filter.columns(measurements)
         measurements = attach_values(list(measurements.prefetch_related('values')), columns)
-        category = slugify(measurement_filter.category.code) if measurement_filter.category else 'none'
+        if measurement_filter.all_categories:
+            category = 'all'
+        else:
+            category = slugify(measurement_filter.category.code) if measurement_filter.category else 'none'
         filename = f'measurements_{category}_{measurement_filter.date_from}_{measurement_filter.date_to}'
         export = to_xlsx if file_format == 'xlsx' else to_csv
-        return export(measurements, columns, measurement_filter.include_deleted, filename)
+        # Element columns as shown on the list page ("show element names" switch); codes by default
+        element_names = request.GET.get('labels') == 'names'
+        return export(measurements, columns, measurement_filter.include_deleted, element_names, filename)
 
 
 class MeasurementDetailView(TenantRequiredMixin, View):

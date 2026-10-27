@@ -173,6 +173,19 @@ class MeasurementListTests(MeasurementTestCase):
         self.assertEqual(self.listed(color='black', size='m'), [222, 111])
         self.assertEqual(self.listed(date_from='2020-01-01', date_to='2020-01-02'), [])
 
+    def test_all_categories(self):
+        Measurement.objects.filter(pk=self.second.pk).update(category_code='OTHER')
+        self.assertEqual(self.listed(), [111])
+        response = self.client.get(self.url, {'category': 'all'})
+        self.assertTrue(response.context['filter'].all_categories)
+        self.assertEqual([m.employee_number for m in response.context['page_obj']], [222, 111])
+        self.assertContains(response, '<td>OTHER</td>')
+        # Only elements that have values
+        Measurement.objects.filter(pk=self.first.pk).update(deleted_at='2026-01-01T00:00Z')
+        self.assertEqual(self.client.get(self.url, {'category': 'all'}).context['columns'], [self.length])
+        response = self.client.get(reverse('measurements:export', args=['csv']), {'category': 'all'})
+        self.assertIn('measurements_all_', response['Content-Disposition'])
+
     def test_removed_element_with_values_is_still_shown(self):
         CategoryElement.objects.filter(element=self.width).delete()
         columns = self.client.get(self.url).context['columns']
@@ -237,7 +250,7 @@ class MeasurementListTests(MeasurementTestCase):
         self.assertEqual(response.status_code, 200)
         sheet = load_workbook(BytesIO(response.content)).active
         rows = list(sheet.values)
-        self.assertEqual(rows[0][7:9], ('Length (cm)', 'Width (cm)'))
+        self.assertEqual(rows[0][7:9], ('L (cm)', 'W (cm)'))
         self.assertEqual(len(rows), 3)
         self.assertEqual(rows[2][1], 111)
         self.assertEqual(rows[2][7:9], (12.5, 7))
@@ -249,6 +262,15 @@ class MeasurementListTests(MeasurementTestCase):
         lines = text.strip().splitlines()
         self.assertEqual(len(lines), 3)
         self.assertIn(';12,5;7,0;', lines[2])
+        self.assertIn(';L (cm);W (cm);', lines[0])
+
+    def test_export_with_element_names(self):
+        params = {'category': self.category.pk, 'labels': 'names'}
+        text = self.client.get(reverse('measurements:export', args=['csv']), params).content.decode('utf-8-sig')
+        self.assertIn(';Length (cm);Width (cm);', text.splitlines()[0])
+        response = self.client.get(reverse('measurements:export', args=['xlsx']), params)
+        header = next(load_workbook(BytesIO(response.content)).active.values)
+        self.assertEqual(header[7:9], ('Length (cm)', 'Width (cm)'))
 
     def test_unknown_export_format(self):
         self.assertEqual(self.client.get(reverse('measurements:export', args=['pdf'])).status_code, 404)

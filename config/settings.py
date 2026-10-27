@@ -124,6 +124,9 @@ LANGUAGES = [
 
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
+# Dates follow the UI language: en 27/10/2026 (British), hr 27.10.2026, it 27/10/2026
+FORMAT_MODULE_PATH = ['config.formats']
+
 TIME_ZONE = 'Europe/Zagreb'
 
 USE_I18N = True

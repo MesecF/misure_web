@@ -1,32 +1,42 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}{% translate 'Measurements' %} · Misure{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'vendor/flatpickr/flatpickr.min.css' %}">
+{% endblock %}
 
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">{% translate 'Measurements' %}</h1>
-    {% if filter.category %}
-      <div class="d-flex gap-2">
-        <a href="{% url 'measurements:export' 'xlsx' %}?{{ filter_query }}" class="btn btn-outline-success">{% translate 'Export to Excel' %}</a>
-        <a href="{% url 'measurements:export' 'csv' %}?{{ filter_query }}" class="btn btn-outline-secondary">{% translate 'Export to CSV' %}</a>
+    {% if filter.selected %}
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="form-check form-switch mb-0 me-2">
+          <input type="checkbox" id="show-element-names" class="form-check-input" role="switch">
+          <label for="show-element-names" class="form-check-label">{% translate 'Show element names' %}</label>
+        </div>
+        <a href="{% url 'measurements:export' 'xlsx' %}?{{ filter_query }}" class="btn btn-outline-success" data-element-labels data-download>{% translate 'Export to Excel' %}</a>
+        <a href="{% url 'measurements:export' 'csv' %}?{{ filter_query }}" class="btn btn-outline-secondary" data-element-labels data-download>{% translate 'Export to CSV' %}</a>
       </div>
     {% endif %}
   </div>
+  <div id="download-message"></div>
 
   <form method="get" class="card card-body mb-3">
     <div class="row g-2 align-items-end">
-      <div class="col-sm-6 col-lg-2">
+      <div class="col-auto filter-date">
         <label for="date_from" class="form-label small mb-1">{% translate 'From' %}</label>
-        <input type="date" id="date_from" name="date_from" value="{{ filter.date_from|date:'Y-m-d' }}" class="form-control">
+        <input type="text" id="date_from" name="date_from" value="{{ filter.date_from|date:'Y-m-d' }}" class="form-control date-picker">
       </div>
-      <div class="col-sm-6 col-lg-2">
+      <div class="col-auto filter-date">
         <label for="date_to" class="form-label small mb-1">{% translate 'To' %}</label>
-        <input type="date" id="date_to" name="date_to" value="{{ filter.date_to|date:'Y-m-d' }}" class="form-control">
+        <input type="text" id="date_to" name="date_to" value="{{ filter.date_to|date:'Y-m-d' }}" class="form-control date-picker">
       </div>
-      <div class="col-sm-6 col-lg-3">
+      <div class="col-auto filter-category">
         <label for="category" class="form-label small mb-1">{% translate 'Category' %}</label>
         <select id="category" name="category" class="form-select">
+          <option value="all"{% if filter.all_categories %} selected{% endif %}>{% translate 'All categories' %}</option>
           {% for category in filter.categories %}
             <option value="{{ category.pk }}"{% if category == filter.category %} selected{% endif %}>
               {{ category }}{% if not category.is_active %} ({% translate 'inactive' %}){% endif %}
@@ -34,24 +44,24 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-sm-6 col-lg-3">
+      <div class="col-auto filter-search">
         <label for="q" class="form-label small mb-1">{% translate 'Article code or barcode' %}</label>
         <input type="search" id="q" name="q" value="{{ filter.search }}" class="form-control">
       </div>
-      <div class="col-sm-4 col-lg-2">
+      <div class="col-auto filter-short">
         <label for="employee" class="form-label small mb-1">{% translate 'Employee number' %}</label>
         <input type="text" id="employee" name="employee" value="{{ filter.employee_text }}" inputmode="numeric" class="form-control">
       </div>
-      <div class="col-sm-4 col-lg-2">
+      <div class="col-auto filter-short">
         <label for="color" class="form-label small mb-1">{% translate 'Color' %}</label>
         <input type="text" id="color" name="color" value="{{ filter.color }}" class="form-control">
       </div>
-      <div class="col-sm-4 col-lg-2">
+      <div class="col-auto filter-short">
         <label for="size" class="form-label small mb-1">{% translate 'Size' %}</label>
         <input type="text" id="size" name="size" value="{{ filter.size }}" class="form-control">
       </div>
       {% if request.user.is_tenant_admin %}
-        <div class="col-sm-6 col-lg-3">
+        <div class="col-auto">
           <div class="form-check mb-2">
             <input type="checkbox" id="deleted" name="deleted" value="1" class="form-check-input"{% if filter.include_deleted %} checked{% endif %}>
             <label for="deleted" class="form-check-label">{% translate 'Show deleted' %}</label>
@@ -65,10 +75,10 @@
     </div>
   </form>
 
-  {% if not filter.category %}
+  {% if not filter.selected %}
     <div class="alert alert-info">{% translate 'There are no categories yet.' %}</div>
   {% else %}
-    <div class="table-responsive">
+    <div id="measurement-table" class="table-responsive show-element-codes">
       <table class="table table-sm table-hover bg-white border align-middle">
         <thead class="table-light">
           <tr>
@@ -78,8 +88,9 @@
             <th>{% translate 'Color' %}</th>
             <th>{% translate 'Size' %}</th>
             <th>{% translate 'Barcode' %}</th>
+            <th>{% translate 'Category' %}</th>
             {% for element in columns %}
-              <th class="text-end">{{ element.name }}<br><span class="fw-normal text-body-secondary small">{{ element.unit }}</span></th>
+              <th class="text-end" title="{{ element.code }} – {{ element.name }}">{% include 'measurements/partials/element_label.html' %}<br><span class="fw-normal text-body-secondary small">{{ element.unit }}</span></th>
             {% endfor %}
             <th></th>
           </tr>
@@ -87,12 +98,13 @@
         <tbody>
           {% for measurement in page_obj %}
             <tr{% if measurement.deleted_at %} class="text-body-secondary text-decoration-line-through"{% endif %}>
-              <td class="text-nowrap">{{ measurement.measured_at|date:'d.m.Y H:i:s' }}</td>
+              <td class="text-nowrap">{{ measurement.measured_at|date:'SHORT_DATETIME_FORMAT' }}</td>
               <td>{{ measurement.employee_number }}</td>
               <td>{{ measurement.article_code }}</td>
               <td>{{ measurement.article_color }}</td>
               <td>{{ measurement.article_size }}</td>
               <td class="font-monospace small">{{ measurement.article_barcode }}</td>
+              <td>{{ measurement.category_code }}</td>
               {% for value in measurement.element_values %}
                 <td class="text-end">{{ value|default_if_none:'' }}</td>
               {% endfor %}
@@ -104,7 +116,7 @@
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="{{ columns|length|add:7 }}" class="text-center text-body-secondary py-4">{% translate 'No measurements found.' %}</td></tr>
+            <tr><td colspan="{{ columns|length|add:8 }}" class="text-center text-body-secondary py-4">{% translate 'No measurements found.' %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -129,4 +141,13 @@
       {% endif %}
     </nav>
   {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}"></script>
+  <script src="{% static 'vendor/flatpickr/hr.js' %}"></script>
+  <script src="{% static 'vendor/flatpickr/it.js' %}"></script>
+  <script src="{% static 'js/date_picker.js' %}" data-date-format="{{ date_format }}"></script>
+  <script src="{% static 'js/element_names.js' %}" data-target="measurement-table"></script>
+  {% include 'partials/download_script.html' %}
 {% endblock %}

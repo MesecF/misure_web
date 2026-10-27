@@ -20,6 +20,7 @@ urlpatterns = [
     path('articles/', views.ArticleListView.as_view(), name='article_list'),
     path('articles/new/', views.ArticleCreateView.as_view(), name='article_create'),
     path('articles/import/', views.ArticleImportView.as_view(), name='article_import'),
+    path('articles/export/<str:file_format>/', views.ArticleExportView.as_view(), name='article_export'),
     path('articles/<int:pk>/', views.ArticleUpdateView.as_view(), name='article_update'),
     path('articles/<int:pk>/toggle-active/', views.ArticleToggleActiveView.as_view(), name='article_toggle_active'),
 ]
