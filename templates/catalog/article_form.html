@@ -6,7 +6,7 @@
 {% block content %}
   <div class="row">
     <div class="col-md-8 col-lg-6">
-      <h1 class="h3 mb-3">{% if object %}{% translate 'Edit article' %}{% else %}{% translate 'New article' %}{% endif %}</h1>
+      <h1 class="h3 mb-3">{% if object %}{% translate 'Edit article' %}{% else %}{% translate 'New article' %}{% endif %} {% include 'partials/help_link.html' with section='articles' %}</h1>
       <div class="card">
         <div class="card-body">
           <form method="post" novalidate>

@@ -1,0 +1,207 @@
+{% with is_admin=request.user.is_tenant_admin %}
+<div class="row g-4">
+  <nav class="col-lg-3">
+    <div class="help-toc card">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-body-secondary">Sadržaj</h2>
+        <ul class="nav flex-column small">
+          <li><a class="nav-link px-0 py-1" href="#start">Prijava i osnove</a></li>
+          <li><a class="nav-link px-0 py-1" href="#entry">Unos mjerenja</a></li>
+          <li><a class="nav-link px-0 py-1" href="#list">Pregled mjerenja</a></li>
+          <li><a class="nav-link px-0 py-1" href="#export">Izvoz u Excel i CSV</a></li>
+          {% if is_admin %}
+            <li class="mt-2 text-body-secondary">Administracija</li>
+            <li><a class="nav-link px-0 py-1" href="#correct">Ispravak i brisanje mjerenja</a></li>
+            <li><a class="nav-link px-0 py-1" href="#categories">Kategorije</a></li>
+            <li><a class="nav-link px-0 py-1" href="#elements">Elementi</a></li>
+            <li><a class="nav-link px-0 py-1" href="#articles">Artikli</a></li>
+            <li><a class="nav-link px-0 py-1" href="#csv">CSV datoteke i Excel</a></li>
+          {% endif %}
+          <li class="mt-2"><a class="nav-link px-0 py-1" href="#faq">Česti problemi</a></li>
+          <li><a class="nav-link px-0 py-1" href="#contact">Kontakt</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="col-lg-9 help-content">
+    <h1 class="h3 mb-4">Upute za korištenje</h1>
+
+    <section id="start" class="mb-5">
+      <h2 class="h4">Prijava i osnove</h2>
+      <ul>
+        <li>Za prijavu odaberite <strong>tvrtku</strong>, upišite <strong>korisničko ime</strong> i <strong>lozinku</strong> te kliknite <strong>Prijava</strong>.</li>
+        <li>Svaka tvrtka vidi samo svoje podatke.</li>
+        <li>Postoje dvije uloge:
+          <ul>
+            <li><strong>Korisnik</strong> unosi i pregledava mjerenja.</li>
+            <li><strong>Administrator</strong> uz to vodi kategorije, elemente i artikle te ispravlja i briše mjerenja (izbornik <strong>Administracija</strong>).</li>
+          </ul>
+        </li>
+        <li>Nakon <strong>5 neuspjelih pokušaja prijave</strong> u 15 minuta to korisničko ime je zaključano 15 minuta, i s točnom lozinkom. Pričekajte pa pokušajte ponovno.</li>
+        <li>Jezik sučelja mijenjate u izborniku jezika u gornjem desnom kutu (English / Hrvatski / Italiano), i prije prijave. Odabir se pamti u pregledniku.</li>
+        <li>Kad završite, kliknite <strong>Odjava</strong>, osobito na zajedničkom računalu.</li>
+        <li>Znak <span class="badge rounded-pill text-bg-light border">?</span> pored naslova stranice otvara upute za tu stranicu u novoj kartici.</li>
+      </ul>
+    </section>
+
+    <section id="entry" class="mb-5">
+      <h2 class="h4">Unos mjerenja</h2>
+      <p>Izbornik <strong>Novo mjerenje</strong>. Ekran je prilagođen čitaču barkoda i mjernom uređaju koji nakon svakog očitanja šalju tipku <kbd>Tab</kbd>. Sve se može raditi i samom tipkovnicom.</p>
+      <ol>
+        <li>Upišite svoj <strong>matični broj</strong>. On ostaje upisan za sljedeća mjerenja dok ga ne promijenite.</li>
+        <li>U polje <strong>Barkod</strong> skenirajte barkod artikla, ili ga upišite pa pritisnite <kbd>Tab</kbd> ili <kbd>Enter</kbd>. Pojavljuju se podaci artikla (šifra, boja, veličina, kategorija) i polja za sve elemente njegove kategorije.</li>
+        <li>Upisujte vrijednosti. <kbd>Tab</kbd> ili <kbd>Enter</kbd> prelazi na sljedeći element.
+          <ul>
+            <li>Polje se može ostaviti prazno, ali barem jedna vrijednost mora biti upisana.</li>
+            <li>Vrijednost je broj 0 ili veći, s najviše jednom decimalom. Decimalni znak može biti zarez ili točka, npr. <code>12,5</code> ili <code>12.5</code>.</li>
+          </ul>
+        </li>
+        <li>Nakon zadnjeg elementa otvara se prozor <strong>Spremiti mjerenje?</strong> s pregledom upisanog:
+          <ul>
+            <li><kbd>Enter</kbd> (ili gumb <strong>Spremi</strong>) sprema mjerenje;</li>
+            <li><kbd>Esc</kbd> (ili gumb <strong>Natrag</strong>) vraća na upis, za ispravak.</li>
+          </ul>
+        </li>
+        <li>Nakon spremanja pojavljuje se zelena poruka s vremenom spremanja, a polja su prazna za <strong>sljedeće mjerenje istog artikla</strong>. Ispod se vide <strong>Današnja mjerenja ovog artikla</strong>.</li>
+      </ol>
+      <h3 class="h6 mt-3">Tipke i gumbi</h3>
+      <table class="table table-sm w-auto">
+        <tbody>
+          <tr><td><kbd>F2</kbd> / <strong>Novi artikl</strong></td><td>briše barkod; skenirajte sljedeći artikl</td></tr>
+          <tr><td><kbd>F3</kbd> / <strong>Promijeni radnika</strong></td><td>briše matični broj; upišite novi</td></tr>
+          <tr><td><strong>Prikaži nazive elemenata</strong></td><td>uz polja prikazuje nazive elemenata umjesto šifri; odabir se pamti u pregledniku</td></tr>
+        </tbody>
+      </table>
+      <h3 class="h6 mt-3">Poruke</h3>
+      <ul>
+        <li><strong>Ne postoji artikl s barkodom …</strong> — artikl nije u šifrarniku. Javite administratoru.</li>
+        <li><strong>Artikl … je neaktivan</strong> / <strong>Kategorija … je neaktivna</strong> — taj artikl se trenutno ne mjeri.</li>
+        <li><strong>Crvena poruka "mjerenje NIJE spremljeno"</strong> — veza sa serverom je prekinuta ili je server javio grešku. Upisane vrijednosti su ostale. Provjerite vezu (mrežu, Wi-Fi) i spremite ponovno: <kbd>Enter</kbd> na zadnjem polju, pa <kbd>Enter</kbd>. <strong>Ne skenirajte sljedeći artikl dok mjerenje nije spremljeno</strong> (zelena poruka).</li>
+        <li>Ako se umjesto unosa otvori stranica za prijavu, prijava je istekla. Prijavite se ponovno; mjerenje koje nije bilo spremljeno treba upisati ponovno.</li>
+      </ul>
+    </section>
+
+    <section id="list" class="mb-5">
+      <h2 class="h4">Pregled mjerenja</h2>
+      <p>Izbornik <strong>Mjerenja</strong>. Kad se otvori, prikazuje današnja mjerenja svih kategorija, 50 po stranici, najnovija prva.</p>
+      <ul>
+        <li><strong>Filteri:</strong> razdoblje (<strong>Od</strong> – <strong>Do</strong>), <strong>Kategorija</strong> (ili <strong>Sve kategorije</strong>), šifra ili barkod artikla (dovoljan je dio), boja, veličina i matični broj. Kliknite <strong>Filtriraj</strong>; <strong>Poništi</strong> vraća početne postavke.</li>
+        <li>Datum se bira u kalendaru ili upisuje u obliku <code>dd.mm.gggg</code>. Ako je datum <strong>Od</strong> nakon datuma <strong>Do</strong>, aplikacija ih sama zamijeni.</li>
+        <li><strong>Stupci elemenata:</strong> za jednu kategoriju prikazuju se svi njezini elementi, redom kao u kategoriji. Za sve kategorije prikazuju se samo elementi koji u prikazanim mjerenjima imaju vrijednost.</li>
+        <li><strong>Prikaži nazive elemenata</strong> mijenja zaglavlja stupaca između šifri i naziva. Isto vrijedi i za izvoz.</li>
+        <li>Mjerenja se prikazuju sa šifrom, bojom, veličinom i kategorijom kakve su bile <strong>u trenutku mjerenja</strong>. Kasnije promjene artikla ne mijenjaju stara mjerenja.</li>
+        <li>Oznaka <span class="badge text-bg-warning">ispravljeno</span> znači da je administrator naknadno ispravio mjerenje.</li>
+        <li><strong>Detalji</strong> otvara pojedinačno mjerenje: tko ga je unio i kada, te tko ga je i kada ispravio.</li>
+      </ul>
+    </section>
+
+    <section id="export" class="mb-5">
+      <h2 class="h4">Izvoz u Excel i CSV</h2>
+      <ul>
+        <li>Gumbi <strong>Izvoz u Excel</strong> i <strong>Izvoz u CSV</strong> izvoze <strong>sve</strong> zapise koji odgovaraju filterima, ne samo prikazanu stranicu. Dok se datoteka priprema, gumb pokazuje <em>Priprema datoteke…</em>.</li>
+        <li>Izvoz mjerenja može obuhvatiti <strong>najviše 366 dana</strong>. Za dulje razdoblje napravite više izvoza.</li>
+        <li><strong>Excel (.xlsx)</strong> je preporučen za otvaranje u Excelu: brojevi, datumi i barkodovi su ispravno zapisani.</li>
+        <li><strong>CSV</strong> je za druge programe: stupci su razdvojeni s <code>;</code>, decimalni znak je zarez. Ako ga otvorite u Excelu, Excel barkodove prikazuje kao <code>8,05952E+12</code>. To je ponašanje Excela; koristite izvoz u Excel.</li>
+      </ul>
+    </section>
+
+    {% if is_admin %}
+    <section id="correct" class="mb-5">
+      <h2 class="h4">Ispravak i brisanje mjerenja <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <ul>
+        <li>U pregledu mjerenja kliknite <strong>Uredi</strong>. Mogu se ispraviti matični broj i vrijednosti, ali ne artikl ni vrijeme mjerenja. Kliknite <strong>Spremi ispravak</strong>. Pamti se tko je i kada zadnji ispravio mjerenje; stare vrijednosti se ne pamte.</li>
+        <li><strong>Obriši mjerenje</strong> uklanja mjerenje iz pregleda i izvoza. Mjerenje nije trajno izbrisano: uključite <strong>Prikaži obrisana</strong>, otvorite ga i kliknite <strong>Vrati mjerenje</strong>.</li>
+        <li>Korisnici s ulogom Korisnik obrisana mjerenja ne vide.</li>
+      </ul>
+    </section>
+
+    <section id="categories" class="mb-5">
+      <h2 class="h4">Kategorije <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <p>Kategorija određuje koji se elementi mjere na njezinim artiklima. Izbornik <strong>Administracija → Kategorije</strong>.</p>
+      <ul>
+        <li><strong>Nova kategorija</strong>: šifra i naziv. Šifra je jedinstvena bez obzira na velika i mala slova.</li>
+        <li><strong>Elementi</strong> kod kategorije otvara popis elemenata koji se u njoj mjere:
+          <ul>
+            <li>element dodajete s njegovim <strong>rednim brojem</strong>, koji određuje redoslijed polja kod unosa. Aplikacija predlaže sljedeći broj (koraci od 10, pa se kasnije može umetnuti element između);</li>
+            <li>redni broj možete promijeniti i spremiti;</li>
+            <li><strong>Ukloni</strong> miče element iz kategorije. Već spremljena mjerenja se ne mijenjaju.</li>
+          </ul>
+        </li>
+        <li>Kategorije, elementi i artikli se ne brišu nego <strong>deaktiviraju</strong> (<strong>Deaktiviraj</strong> / <strong>Aktiviraj</strong>). Neaktivni zapisi se ne nude kod unosa, a povijest mjerenja ostaje cijela.</li>
+        <li>Kad kategorija ima mjerenja, njezina <strong>šifra se više ne može mijenjati</strong> (o njoj ovisi pretraga mjerenja). Naziv se može mijenjati.</li>
+      </ul>
+    </section>
+
+    <section id="elements" class="mb-5">
+      <h2 class="h4">Elementi <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <p>Element je mjera koja se mjeri, npr. dužina ili širina. Jedan element može biti u više kategorija. Izbornik <strong>Administracija → Elementi</strong>.</p>
+      <ul>
+        <li><strong>Novi element</strong>: šifra (sprema se velikim slovima), naziv i jedinica (npr. <code>cm</code>).</li>
+        <li>Kad element ima izmjerene vrijednosti, <strong>šifra i jedinica se više ne mogu mijenjati</strong>.
+          <ul>
+            <li>Naziv se može ispraviti, ali novi naziv vidi se i za ranija mjerenja u pregledu i izvozu.</li>
+            <li>Ako element treba mjeriti nešto drugo, napravite <strong>novi element</strong>, a stari deaktivirajte.</li>
+          </ul>
+        </li>
+        <li><strong>Uvoz CSV-a</strong>: stupci <code>šifra;naziv;jedinica</code>, prvi redak je zaglavlje. Uvoze se samo novi elementi; šifra koja već postoji (i kao neaktivan element) se odbija. Primjer: <code>B05;Lunghezza totale;cm</code>. Elemente zatim povežite s kategorijama.</li>
+        <li><strong>Izvoz</strong> prati filter statusa i uključuje kategorije u kojima je element.</li>
+      </ul>
+    </section>
+
+    <section id="articles" class="mb-5">
+      <h2 class="h4">Artikli <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <p>Izbornik <strong>Administracija → Artikli</strong>. Pretraga po šifri ili barkodu, filter po kategoriji i statusu.</p>
+      <ul>
+        <li>Artikl ima šifru (do 15 znakova), boju (do 10), veličinu (do 10), kategoriju i barkod. Šifra, boja i veličina spremaju se velikim slovima.</li>
+        <li>Barkod mora biti ispravan <strong>EAN-13</strong> (13 znamenki s ispravnom kontrolnom znamenkom).</li>
+        <li>U tvrtki se ne mogu ponoviti ni barkod ni kombinacija šifre, boje i veličine.</li>
+        <li><strong>Uvoz CSV-a</strong>: stupci <code>šifra;boja;veličina;šifra kategorije;barkod</code>, prvi redak je zaglavlje. Primjer: <code>UMC250C;8984;50;MAGLIA;8059522105740</code>.
+          <ul>
+            <li>Novi barkod dodaje artikl. Postojeći barkod ažurira artikl (neaktivan ostaje neaktivan).</li>
+            <li>Kategorija mora postojati i biti aktivna.</li>
+            <li>Retci s greškom se preskaču i ispisuju s brojem retka i razlogom; ispravni se uvezu. Datoteka može imati do 5 MB.</li>
+          </ul>
+        </li>
+        <li>Izmjena artikla ne mijenja već spremljena mjerenja.</li>
+      </ul>
+    </section>
+
+    <section id="csv" class="mb-5">
+      <h2 class="h4">CSV datoteke i Excel <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <ul>
+        <li>U Excelu: <strong>Datoteka → Spremi kao</strong> i odaberite vrstu <strong>CSV UTF-8</strong> ili <strong>CSV</strong>. Uz hrvatske ili talijanske postavke Windowsa Excel stupce razdvaja s <code>;</code>, kako treba.</li>
+        <li><strong>Stupac barkoda oblikujte kao tekst</strong> prije upisa ili lijepljenja barkodova (desni klik → Oblikovanje ćelija → Tekst). Inače Excel barkod pretvori u broj (<code>8,05952E+12</code>) i izgubi znamenke, pa uvoz takav redak odbije.</li>
+        <li>Ako uvoz javi <em>Očekivano stupaca: 5, pronađeno: 1</em>, datoteka nije razdvojena s <code>;</code>. Najčešće je spremljena sa zarezima.</li>
+        <li>Ako javi da se datoteka ne može pročitati kao CSV, odabrana je Excel datoteka (<code>.xlsx</code>) ili drugi format. Spremite je kao CSV.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    <section id="faq" class="mb-5">
+      <h2 class="h4">Česti problemi</h2>
+      <dl>
+        <dt>Nakon skeniranja se ništa ne događa</dt>
+        <dd>Kursor mora biti u polju <strong>Barkod</strong>. Čitač treba nakon barkoda slati <kbd>Tab</kbd> ili <kbd>Enter</kbd>; inače nakon skeniranja pritisnite <kbd>Tab</kbd>. Isti barkod se ne učitava dvaput zaredom: za ponovno učitavanje pritisnite <kbd>F2</kbd> i skenirajte ponovno.</dd>
+        <dt>Ne mogu spremiti, javlja "Upišite barem jednu vrijednost."</dt>
+        <dd>Sva polja elemenata su prazna. Upišite barem jednu vrijednost.</dd>
+        <dt>Mjerenje nije u pregledu</dt>
+        <dd>Provjerite razdoblje (po defaultu je samo današnji dan) i ostale filtere, ili kliknite <strong>Poništi</strong>.</dd>
+        <dt>Ne mogu se prijaviti</dt>
+        <dd>Provjerite je li odabrana prava tvrtka. Nakon 5 krivih lozinki prijava je zaključana 15 minuta. Za novu lozinku obratite se administratoru.</dd>
+        {% if is_admin %}
+        <dt>Ne mogu promijeniti šifru elementa ili kategorije</dt>
+        <dd>Element ili kategorija već imaju mjerenja. Vidi <a href="#elements">Elementi</a> i <a href="#categories">Kategorije</a>.</dd>
+        <dt>Ne mogu obrisati artikl, element ili kategoriju</dt>
+        <dd>Brisanje nije moguće, namjerno, da povijest mjerenja ostane cijela. Koristite <strong>Deaktiviraj</strong>.</dd>
+        {% endif %}
+      </dl>
+    </section>
+
+    <section id="contact" class="mb-5">
+      <h2 class="h4">Kontakt</h2>
+      <p>Za probleme i pitanja koja ove upute ne pokrivaju obratite se na <a href="mailto:filip.mesec@intinova.com.hr">filip.mesec@intinova.com.hr</a>.</p>
+    </section>
+  </div>
+</div>
+{% endwith %}

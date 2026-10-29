@@ -1,0 +1,5 @@
+{% load i18n %}
+{# Link to the help section about this page: include with section=<id in templates/help/content_*.html> #}
+{% translate 'Help' as help_text %}
+<a href="{% url 'help' %}#{{ section }}" class="help-link btn btn-sm btn-outline-secondary rounded-circle"
+   title="{{ help_text }}" aria-label="{{ help_text }}" target="_blank" tabindex="-1">?</a>

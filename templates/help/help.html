@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Help' %} · Misure{% endblock %}
+
+{% block content %}
+  {# The text is per language (HelpView); admin-only sections use request.user.is_tenant_admin #}
+  {% include content_template %}
+{% endblock %}

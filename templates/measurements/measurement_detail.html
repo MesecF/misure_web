@@ -8,6 +8,7 @@
     <h1 class="h3 mb-0">
       {% translate 'Measurement' %} {{ measurement.measured_at|date:'SHORT_DATETIME_FORMAT' }}
       {% if measurement.deleted_at %}<span class="badge text-bg-danger align-middle">{% translate 'deleted' %}</span>{% endif %}
+      {% include 'partials/help_link.html' with section=request.user.is_tenant_admin|yesno:'correct,list' %}
     </h1>
     <a href="{{ next }}" class="btn btn-link">{% translate 'Back to measurements' %}</a>
   </div>

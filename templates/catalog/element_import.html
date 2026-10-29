@@ -4,7 +4,7 @@
 {% block title %}{% translate 'Import elements' %} · Misure{% endblock %}
 
 {% block content %}
-  <h1 class="h3 mb-3">{% translate 'Import elements' %}</h1>
+  <h1 class="h3 mb-3">{% translate 'Import elements' %} {% include 'partials/help_link.html' with section='elements' %}</h1>
 
   {% include 'partials/import_result.html' %}
 

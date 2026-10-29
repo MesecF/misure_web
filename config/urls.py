@@ -6,7 +6,7 @@ from django.views.i18n import set_language
 
 from accounts.views import TenantLoginView
 
-from .views import HomeView
+from .views import HelpView, HomeView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,5 +16,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('catalog/', include('catalog.urls')),
     path('measurements/', include('measurements.urls')),
+    path('help/', HelpView.as_view(), name='help'),
     path('', HomeView.as_view(), name='home'),
 ]

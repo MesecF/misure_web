@@ -6,6 +6,25 @@
   display: none;
 }
 
+/* "?" next to page titles, opens the help section about the page */
+.help-link {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  line-height: 1.6rem;
+  vertical-align: middle;
+}
+
+/* Help page: the table of contents stays visible, headings are not hidden under the top of the window */
+.help-toc {
+  position: sticky;
+  top: 1rem;
+}
+
+.help-content section {
+  scroll-margin-top: 1rem;
+}
+
 /* Measurement list filters: only as wide as their content needs */
 .filter-date {
   width: 9.5rem;

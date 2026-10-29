@@ -149,6 +149,19 @@ class LoginFlowTests(TestCase):
         # Normal requests are redirected as usual
         self.assertEqual(self.client.get(reverse('measurements:article_panel')).status_code, 302)
 
+    def test_help_in_ui_language_with_admin_sections_for_admin_only(self):
+        expected = {'en': 'User guide', 'hr': 'Upute za korištenje', 'it': "Guida all'uso"}
+        for user, admin_sections in ((self.user_a, False), (self.admin_a, True)):
+            self.client.force_login(user)
+            for language, title in expected.items():
+                self.client.cookies['django_language'] = language
+                response = self.client.get(reverse('help'))
+                self.assertContains(response, title)
+                self.assertContains(response, 'id="entry"')
+                self.assertEqual('id="articles"' in response.content.decode(), admin_sections)
+        # The "?" on a page leads to its section
+        self.assertContains(self.client.get(reverse('measurements:entry')), f"{reverse('help')}#entry")
+
     def test_inactive_company_is_not_offered(self):
         self.tenant_b.is_active = False
         self.tenant_b.save()

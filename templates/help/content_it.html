@@ -1,0 +1,207 @@
+{% with is_admin=request.user.is_tenant_admin %}
+<div class="row g-4">
+  <nav class="col-lg-3">
+    <div class="help-toc card">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-body-secondary">Indice</h2>
+        <ul class="nav flex-column small">
+          <li><a class="nav-link px-0 py-1" href="#start">Accesso e nozioni di base</a></li>
+          <li><a class="nav-link px-0 py-1" href="#entry">Inserimento delle misurazioni</a></li>
+          <li><a class="nav-link px-0 py-1" href="#list">Consultazione delle misurazioni</a></li>
+          <li><a class="nav-link px-0 py-1" href="#export">Esportazione in Excel e CSV</a></li>
+          {% if is_admin %}
+            <li class="mt-2 text-body-secondary">Amministrazione</li>
+            <li><a class="nav-link px-0 py-1" href="#correct">Correzione ed eliminazione delle misurazioni</a></li>
+            <li><a class="nav-link px-0 py-1" href="#categories">Categorie</a></li>
+            <li><a class="nav-link px-0 py-1" href="#elements">Elementi</a></li>
+            <li><a class="nav-link px-0 py-1" href="#articles">Articoli</a></li>
+            <li><a class="nav-link px-0 py-1" href="#csv">File CSV ed Excel</a></li>
+          {% endif %}
+          <li class="mt-2"><a class="nav-link px-0 py-1" href="#faq">Problemi frequenti</a></li>
+          <li><a class="nav-link px-0 py-1" href="#contact">Contatto</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="col-lg-9 help-content">
+    <h1 class="h3 mb-4">Guida all'uso</h1>
+
+    <section id="start" class="mb-5">
+      <h2 class="h4">Accesso e nozioni di base</h2>
+      <ul>
+        <li>Per accedere selezionare l'<strong>azienda</strong>, inserire <strong>nome utente</strong> e <strong>password</strong> e fare clic su <strong>Accedi</strong>.</li>
+        <li>Ogni azienda vede solo i propri dati.</li>
+        <li>Esistono due ruoli:
+          <ul>
+            <li>l'<strong>Utente</strong> inserisce e consulta le misurazioni;</li>
+            <li>l'<strong>Amministratore</strong> gestisce inoltre categorie, elementi e articoli, e corregge ed elimina le misurazioni (menu <strong>Amministrazione</strong>).</li>
+          </ul>
+        </li>
+        <li>Dopo <strong>5 tentativi di accesso non riusciti</strong> in 15 minuti il nome utente viene bloccato per 15 minuti, anche con la password corretta. Attendere e riprovare.</li>
+        <li>La lingua si cambia nel menu della lingua in alto a destra (English / Hrvatski / Italiano), anche prima dell'accesso. La scelta viene memorizzata nel browser.</li>
+        <li>Al termine fare clic su <strong>Esci</strong>, soprattutto su un computer condiviso.</li>
+        <li>Il simbolo <span class="badge rounded-pill text-bg-light border">?</span> accanto al titolo di una pagina apre la guida di quella pagina in una nuova scheda.</li>
+      </ul>
+    </section>
+
+    <section id="entry" class="mb-5">
+      <h2 class="h4">Inserimento delle misurazioni</h2>
+      <p>Menu <strong>Nuova misurazione</strong>. La schermata è pensata per un lettore di codici a barre e uno strumento di misura che inviano il tasto <kbd>Tab</kbd> dopo ogni lettura. Tutto funziona anche con la sola tastiera.</p>
+      <ol>
+        <li>Inserire la propria <strong>matricola</strong>. Resta impostata per le misurazioni successive finché non viene cambiata.</li>
+        <li>Leggere il codice a barre dell'articolo nel campo <strong>Codice a barre</strong>, oppure digitarlo e premere <kbd>Tab</kbd> o <kbd>Invio</kbd>. Compaiono i dati dell'articolo (codice, colore, taglia, categoria) e un campo per ogni elemento della sua categoria.</li>
+        <li>Inserire i valori. <kbd>Tab</kbd> o <kbd>Invio</kbd> passa all'elemento successivo.
+          <ul>
+            <li>Un campo può restare vuoto, ma è necessario almeno un valore.</li>
+            <li>Il valore è un numero maggiore o uguale a 0 con al massimo un decimale. Il separatore decimale può essere la virgola o il punto, ad es. <code>12,5</code> o <code>12.5</code>.</li>
+          </ul>
+        </li>
+        <li>Dopo l'ultimo elemento si apre la finestra <strong>Salvare la misurazione?</strong> con il riepilogo:
+          <ul>
+            <li><kbd>Invio</kbd> (o il pulsante <strong>Salva</strong>) salva la misurazione;</li>
+            <li><kbd>Esc</kbd> (o <strong>Indietro</strong>) torna ai campi per correggere.</li>
+          </ul>
+        </li>
+        <li>Dopo il salvataggio compare un messaggio verde con l'ora del salvataggio e i campi sono vuoti per la <strong>misurazione successiva dello stesso articolo</strong>. Sotto si vedono le <strong>Misurazioni di oggi di questo articolo</strong>.</li>
+      </ol>
+      <h3 class="h6 mt-3">Tasti e pulsanti</h3>
+      <table class="table table-sm w-auto">
+        <tbody>
+          <tr><td><kbd>F2</kbd> / <strong>Nuovo articolo</strong></td><td>cancella il codice a barre; leggere l'articolo successivo</td></tr>
+          <tr><td><kbd>F3</kbd> / <strong>Cambia operatore</strong></td><td>cancella la matricola; inserire quella nuova</td></tr>
+          <tr><td><strong>Mostra i nomi degli elementi</strong></td><td>mostra accanto ai campi i nomi degli elementi invece dei codici; la scelta viene memorizzata nel browser</td></tr>
+        </tbody>
+      </table>
+      <h3 class="h6 mt-3">Messaggi</h3>
+      <ul>
+        <li><strong>Nessun articolo con codice a barre …</strong> — l'articolo non è in anagrafica. Avvisare l'amministratore.</li>
+        <li><strong>L'articolo … non è attivo</strong> / <strong>La categoria … non è attiva</strong> — questo articolo al momento non si misura.</li>
+        <li><strong>Messaggio rosso "la misurazione NON è stata salvata"</strong> — la connessione al server si è interrotta o il server ha segnalato un errore. I valori inseriti sono ancora presenti. Controllare la connessione (rete, Wi-Fi) e salvare di nuovo: <kbd>Invio</kbd> sull'ultimo campo, poi <kbd>Invio</kbd>. <strong>Non leggere l'articolo successivo finché la misurazione non è salvata</strong> (messaggio verde).</li>
+        <li>Se al posto dell'inserimento si apre la pagina di accesso, la sessione è scaduta. Accedere di nuovo; una misurazione non salvata va inserita di nuovo.</li>
+      </ul>
+    </section>
+
+    <section id="list" class="mb-5">
+      <h2 class="h4">Consultazione delle misurazioni</h2>
+      <p>Menu <strong>Misurazioni</strong>. All'apertura mostra le misurazioni di oggi di tutte le categorie, 50 per pagina, dalla più recente.</p>
+      <ul>
+        <li><strong>Filtri:</strong> periodo (<strong>Dal</strong> – <strong>Al</strong>), <strong>Categoria</strong> (o <strong>Tutte le categorie</strong>), codice o codice a barre dell'articolo (basta una parte), colore, taglia e matricola. Fare clic su <strong>Filtra</strong>; <strong>Azzera</strong> ripristina le impostazioni iniziali.</li>
+        <li>La data si sceglie nel calendario o si digita nel formato <code>gg/mm/aaaa</code>. Se la data <strong>Dal</strong> è successiva alla data <strong>Al</strong>, le date vengono scambiate automaticamente.</li>
+        <li><strong>Colonne degli elementi:</strong> per una categoria vengono mostrati tutti i suoi elementi, nell'ordine della categoria. Per tutte le categorie vengono mostrati solo gli elementi con un valore nelle misurazioni mostrate.</li>
+        <li><strong>Mostra i nomi degli elementi</strong> alterna le intestazioni delle colonne tra codici e nomi. L'esportazione segue la stessa scelta.</li>
+        <li>Le misurazioni mostrano codice, colore, taglia e categoria com'erano <strong>al momento della misurazione</strong>. Le modifiche successive di un articolo non cambiano le misurazioni precedenti.</li>
+        <li>L'etichetta <span class="badge text-bg-warning">corretta</span> indica che un amministratore ha corretto la misurazione in seguito.</li>
+        <li><strong>Dettagli</strong> apre una singola misurazione: chi l'ha inserita e quando, e chi l'ha corretta e quando.</li>
+      </ul>
+    </section>
+
+    <section id="export" class="mb-5">
+      <h2 class="h4">Esportazione in Excel e CSV</h2>
+      <ul>
+        <li>I pulsanti <strong>Esporta in Excel</strong> ed <strong>Esporta in CSV</strong> esportano <strong>tutti</strong> i record che corrispondono ai filtri, non solo la pagina mostrata. Durante la preparazione del file il pulsante mostra <em>Preparazione del file…</em>.</li>
+        <li>Un'esportazione delle misurazioni può coprire <strong>al massimo 366 giorni</strong>. Per un periodo più lungo eseguire più esportazioni.</li>
+        <li><strong>Excel (.xlsx)</strong> è consigliato per l'apertura in Excel: numeri, date e codici a barre sono scritti correttamente.</li>
+        <li><strong>CSV</strong> è destinato ad altri programmi: le colonne sono separate da <code>;</code>, il separatore decimale è la virgola. Aperto in Excel, i codici a barre appaiono come <code>8,05952E+12</code>. È il comportamento di Excel; usare l'esportazione in Excel.</li>
+      </ul>
+    </section>
+
+    {% if is_admin %}
+    <section id="correct" class="mb-5">
+      <h2 class="h4">Correzione ed eliminazione delle misurazioni <span class="badge text-bg-secondary align-middle fs-6">amministratore</span></h2>
+      <ul>
+        <li>Nell'elenco delle misurazioni fare clic su <strong>Modifica</strong>. Si possono correggere la matricola e i valori, non l'articolo né l'ora della misurazione. Fare clic su <strong>Salva correzione</strong>. Viene registrato chi ha corretto la misurazione per ultimo e quando; i valori precedenti non vengono conservati.</li>
+        <li><strong>Elimina misurazione</strong> la toglie dall'elenco e dall'esportazione. Non viene cancellata definitivamente: attivare <strong>Mostra eliminate</strong>, aprirla e fare clic su <strong>Ripristina misurazione</strong>.</li>
+        <li>Gli utenti con il ruolo Utente non vedono le misurazioni eliminate.</li>
+      </ul>
+    </section>
+
+    <section id="categories" class="mb-5">
+      <h2 class="h4">Categorie <span class="badge text-bg-secondary align-middle fs-6">amministratore</span></h2>
+      <p>La categoria stabilisce quali elementi si misurano sui suoi articoli. Menu <strong>Amministrazione → Categorie</strong>.</p>
+      <ul>
+        <li><strong>Nuova categoria</strong>: codice e nome. Il codice è univoco indipendentemente da maiuscole e minuscole.</li>
+        <li><strong>Elementi</strong> accanto a una categoria apre gli elementi misurati in essa:
+          <ul>
+            <li>l'elemento si aggiunge con il suo <strong>ordine</strong>, che stabilisce l'ordine dei campi durante la misurazione. Viene proposto il numero successivo (passi di 10, così in seguito si può inserire un elemento in mezzo);</li>
+            <li>l'ordine si può modificare e salvare;</li>
+            <li><strong>Rimuovi</strong> toglie l'elemento dalla categoria. Le misurazioni già salvate non cambiano.</li>
+          </ul>
+        </li>
+        <li>Categorie, elementi e articoli non si eliminano ma si <strong>disattivano</strong> (<strong>Disattiva</strong> / <strong>Attiva</strong>). I record non attivi non vengono proposti durante la misurazione e lo storico delle misurazioni resta completo.</li>
+        <li>Quando una categoria ha misurazioni, il suo <strong>codice non si può più modificare</strong> (la ricerca delle misurazioni dipende da esso). Il nome si può modificare.</li>
+      </ul>
+    </section>
+
+    <section id="elements" class="mb-5">
+      <h2 class="h4">Elementi <span class="badge text-bg-secondary align-middle fs-6">amministratore</span></h2>
+      <p>Un elemento è una misura da rilevare, ad es. una lunghezza o una larghezza. Un elemento può appartenere a più categorie. Menu <strong>Amministrazione → Elementi</strong>.</p>
+      <ul>
+        <li><strong>Nuovo elemento</strong>: codice (salvato in maiuscolo), nome e unità (ad es. <code>cm</code>).</li>
+        <li>Quando un elemento ha valori misurati, <strong>codice e unità non si possono più modificare</strong>.
+          <ul>
+            <li>Il nome si può correggere, ma il nuovo nome viene mostrato anche per le misurazioni precedenti nell'elenco e nell'esportazione.</li>
+            <li>Se l'elemento deve misurare un'altra cosa, creare un <strong>nuovo elemento</strong> e disattivare quello vecchio.</li>
+          </ul>
+        </li>
+        <li><strong>Importa CSV</strong>: colonne <code>codice;nome;unità</code>, la prima riga è l'intestazione. Vengono importati solo elementi nuovi; un codice già esistente (anche come elemento non attivo) viene scartato. Esempio: <code>B05;Lunghezza totale;cm</code>. Poi aggiungere gli elementi alle categorie.</li>
+        <li>L'<strong>esportazione</strong> segue il filtro dello stato e include le categorie di ogni elemento.</li>
+      </ul>
+    </section>
+
+    <section id="articles" class="mb-5">
+      <h2 class="h4">Articoli <span class="badge text-bg-secondary align-middle fs-6">amministratore</span></h2>
+      <p>Menu <strong>Amministrazione → Articoli</strong>. Ricerca per codice o codice a barre, filtro per categoria e stato.</p>
+      <ul>
+        <li>Un articolo ha codice (fino a 15 caratteri), colore (fino a 10), taglia (fino a 10), categoria e codice a barre. Codice, colore e taglia vengono salvati in maiuscolo.</li>
+        <li>Il codice a barre deve essere un <strong>EAN-13</strong> valido (13 cifre con cifra di controllo corretta).</li>
+        <li>All'interno di un'azienda non possono ripetersi né il codice a barre né la combinazione di codice, colore e taglia.</li>
+        <li><strong>Importa CSV</strong>: colonne <code>codice;colore;taglia;codice categoria;codice a barre</code>, la prima riga è l'intestazione. Esempio: <code>UMC250C;8984;50;MAGLIA;8059522105740</code>.
+          <ul>
+            <li>Un nuovo codice a barre aggiunge un articolo. Un codice a barre esistente aggiorna l'articolo (uno non attivo resta non attivo).</li>
+            <li>La categoria deve esistere ed essere attiva.</li>
+            <li>Le righe con errori vengono saltate ed elencate con numero di riga e motivo; le righe valide vengono importate. Il file può essere al massimo di 5 MB.</li>
+          </ul>
+        </li>
+        <li>La modifica di un articolo non cambia le misurazioni salvate.</li>
+      </ul>
+    </section>
+
+    <section id="csv" class="mb-5">
+      <h2 class="h4">File CSV ed Excel <span class="badge text-bg-secondary align-middle fs-6">amministratore</span></h2>
+      <ul>
+        <li>In Excel: <strong>File → Salva con nome</strong> e scegliere il tipo <strong>CSV UTF-8</strong> o <strong>CSV</strong>. Con le impostazioni di Windows italiane o croate Excel separa le colonne con <code>;</code>, come richiesto.</li>
+        <li><strong>Formattare la colonna del codice a barre come testo</strong> prima di digitare o incollare i codici (clic destro → Formato celle → Testo). Altrimenti Excel trasforma il codice a barre in un numero (<code>8,05952E+12</code>) e perde cifre, e l'importazione scarta la riga.</li>
+        <li>Se l'importazione segnala <em>Colonne previste: 5, trovate: 1</em>, il file non è separato da <code>;</code>, di solito perché è stato salvato con le virgole.</li>
+        <li>Se segnala che il file non può essere letto come CSV, è stata scelta una cartella di lavoro Excel (<code>.xlsx</code>) o un altro formato. Salvarlo come CSV.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    <section id="faq" class="mb-5">
+      <h2 class="h4">Problemi frequenti</h2>
+      <dl>
+        <dt>Dopo la lettura del codice a barre non succede nulla</dt>
+        <dd>Il cursore deve essere nel campo <strong>Codice a barre</strong>. Il lettore deve inviare <kbd>Tab</kbd> o <kbd>Invio</kbd> dopo il codice; altrimenti premere <kbd>Tab</kbd> dopo la lettura. Lo stesso codice a barre non viene caricato due volte di seguito: per ricaricarlo premere <kbd>F2</kbd> e leggerlo di nuovo.</dd>
+        <dt>Non riesco a salvare, compare "Inserire almeno un valore."</dt>
+        <dd>Tutti i campi degli elementi sono vuoti. Inserire almeno un valore.</dd>
+        <dt>Una misurazione non compare nell'elenco</dt>
+        <dd>Controllare il periodo (per impostazione predefinita solo oggi) e gli altri filtri, oppure fare clic su <strong>Azzera</strong>.</dd>
+        <dt>Non riesco ad accedere</dt>
+        <dd>Verificare che sia selezionata l'azienda corretta. Dopo 5 password errate l'accesso è bloccato per 15 minuti. Per una nuova password rivolgersi all'amministratore.</dd>
+        {% if is_admin %}
+        <dt>Non riesco a modificare il codice di un elemento o di una categoria</dt>
+        <dd>L'elemento o la categoria hanno già misurazioni. Vedere <a href="#elements">Elementi</a> e <a href="#categories">Categorie</a>.</dd>
+        <dt>Non riesco a eliminare un articolo, un elemento o una categoria</dt>
+        <dd>L'eliminazione non è possibile, di proposito, affinché lo storico delle misurazioni resti completo. Usare <strong>Disattiva</strong>.</dd>
+        {% endif %}
+      </dl>
+    </section>
+
+    <section id="contact" class="mb-5">
+      <h2 class="h4">Contatto</h2>
+      <p>Per problemi e domande non trattati in questa guida scrivere a <a href="mailto:filip.mesec@intinova.com.hr">filip.mesec@intinova.com.hr</a>.</p>
+    </section>
+  </div>
+</div>
+{% endwith %}

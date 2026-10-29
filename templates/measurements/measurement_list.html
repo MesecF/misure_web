@@ -9,7 +9,7 @@
 
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">{% translate 'Measurements' %}</h1>
+    <h1 class="h3 mb-0">{% translate 'Measurements' %} {% include 'partials/help_link.html' with section='list' %}</h1>
     {% if filter.selected %}
       <div class="d-flex flex-wrap align-items-center gap-2">
         <div class="form-check form-switch mb-0 me-2">

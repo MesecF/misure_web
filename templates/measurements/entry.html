@@ -5,7 +5,7 @@
 
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">{% translate 'New measurement' %}</h1>
+    <h1 class="h3 mb-0">{% translate 'New measurement' %} {% include 'partials/help_link.html' with section='entry' %}</h1>
     {# tabindex -1: the scanner's and meter's Tab must never land on these controls #}
     <div class="d-flex flex-wrap align-items-center gap-3">
       <div class="form-check form-switch mb-0">

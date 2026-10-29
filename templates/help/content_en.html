@@ -1,0 +1,207 @@
+{% with is_admin=request.user.is_tenant_admin %}
+<div class="row g-4">
+  <nav class="col-lg-3">
+    <div class="help-toc card">
+      <div class="card-body">
+        <h2 class="h6 text-uppercase text-body-secondary">Contents</h2>
+        <ul class="nav flex-column small">
+          <li><a class="nav-link px-0 py-1" href="#start">Login and basics</a></li>
+          <li><a class="nav-link px-0 py-1" href="#entry">Entering measurements</a></li>
+          <li><a class="nav-link px-0 py-1" href="#list">Viewing measurements</a></li>
+          <li><a class="nav-link px-0 py-1" href="#export">Export to Excel and CSV</a></li>
+          {% if is_admin %}
+            <li class="mt-2 text-body-secondary">Administration</li>
+            <li><a class="nav-link px-0 py-1" href="#correct">Correcting and deleting measurements</a></li>
+            <li><a class="nav-link px-0 py-1" href="#categories">Categories</a></li>
+            <li><a class="nav-link px-0 py-1" href="#elements">Elements</a></li>
+            <li><a class="nav-link px-0 py-1" href="#articles">Articles</a></li>
+            <li><a class="nav-link px-0 py-1" href="#csv">CSV files and Excel</a></li>
+          {% endif %}
+          <li class="mt-2"><a class="nav-link px-0 py-1" href="#faq">Common problems</a></li>
+          <li><a class="nav-link px-0 py-1" href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="col-lg-9 help-content">
+    <h1 class="h3 mb-4">User guide</h1>
+
+    <section id="start" class="mb-5">
+      <h2 class="h4">Login and basics</h2>
+      <ul>
+        <li>To log in, select the <strong>company</strong>, enter your <strong>username</strong> and <strong>password</strong> and click <strong>Log in</strong>.</li>
+        <li>Each company sees only its own data.</li>
+        <li>There are two roles:
+          <ul>
+            <li><strong>User</strong> enters and views measurements.</li>
+            <li><strong>Administrator</strong> also maintains categories, elements and articles, and corrects and deletes measurements (menu <strong>Administration</strong>).</li>
+          </ul>
+        </li>
+        <li>After <strong>5 failed login attempts</strong> within 15 minutes the username is locked for 15 minutes, even with the right password. Wait and try again.</li>
+        <li>Change the language in the language menu in the top right corner (English / Hrvatski / Italiano), also before logging in. The choice is remembered in the browser.</li>
+        <li>When you are done, click <strong>Log out</strong>, especially on a shared computer.</li>
+        <li>The <span class="badge rounded-pill text-bg-light border">?</span> next to a page title opens the guide for that page in a new tab.</li>
+      </ul>
+    </section>
+
+    <section id="entry" class="mb-5">
+      <h2 class="h4">Entering measurements</h2>
+      <p>Menu <strong>New measurement</strong>. The screen is made for a barcode scanner and a measuring device that send <kbd>Tab</kbd> after each reading. Everything also works with the keyboard alone.</p>
+      <ol>
+        <li>Enter your <strong>employee number</strong>. It stays for the next measurements until you change it.</li>
+        <li>Scan the article barcode into the <strong>Barcode</strong> field, or type it and press <kbd>Tab</kbd> or <kbd>Enter</kbd>. The article data (code, color, size, category) appear, with a field for each element of its category.</li>
+        <li>Enter the values. <kbd>Tab</kbd> or <kbd>Enter</kbd> moves to the next element.
+          <ul>
+            <li>A field can stay empty, but at least one value is required.</li>
+            <li>A value is a number of 0 or more with at most one decimal. The decimal sign can be a comma or a dot, e.g. <code>12,5</code> or <code>12.5</code>.</li>
+          </ul>
+        </li>
+        <li>After the last element the window <strong>Save measurement?</strong> shows what was entered:
+          <ul>
+            <li><kbd>Enter</kbd> (or the <strong>Save</strong> button) saves the measurement;</li>
+            <li><kbd>Esc</kbd> (or <strong>Back</strong>) returns to the fields for a correction.</li>
+          </ul>
+        </li>
+        <li>After saving, a green message shows the time of saving and the fields are empty for the <strong>next measurement of the same article</strong>. Below them you see <strong>Today's measurements of this article</strong>.</li>
+      </ol>
+      <h3 class="h6 mt-3">Keys and buttons</h3>
+      <table class="table table-sm w-auto">
+        <tbody>
+          <tr><td><kbd>F2</kbd> / <strong>New article</strong></td><td>clears the barcode; scan the next article</td></tr>
+          <tr><td><kbd>F3</kbd> / <strong>Change employee</strong></td><td>clears the employee number; enter the new one</td></tr>
+          <tr><td><strong>Show element names</strong></td><td>shows element names instead of codes next to the fields; remembered in the browser</td></tr>
+        </tbody>
+      </table>
+      <h3 class="h6 mt-3">Messages</h3>
+      <ul>
+        <li><strong>No article with barcode …</strong> — the article is not in the list of articles. Tell an administrator.</li>
+        <li><strong>Article … is inactive</strong> / <strong>Category … is inactive</strong> — this article is not measured at the moment.</li>
+        <li><strong>Red message "the measurement was NOT saved"</strong> — the connection to the server was lost or the server reported an error. The entered values are still there. Check the connection (network, Wi-Fi) and save again: <kbd>Enter</kbd> on the last field, then <kbd>Enter</kbd>. <strong>Do not scan the next article until the measurement is saved</strong> (green message).</li>
+        <li>If the login page opens instead of the entry screen, the session has ended. Log in again; a measurement that was not saved has to be entered again.</li>
+      </ul>
+    </section>
+
+    <section id="list" class="mb-5">
+      <h2 class="h4">Viewing measurements</h2>
+      <p>Menu <strong>Measurements</strong>. It opens with today's measurements of all categories, 50 per page, newest first.</p>
+      <ul>
+        <li><strong>Filters:</strong> period (<strong>From</strong> – <strong>To</strong>), <strong>Category</strong> (or <strong>All categories</strong>), article code or barcode (part of it is enough), color, size and employee number. Click <strong>Filter</strong>; <strong>Reset</strong> restores the defaults.</li>
+        <li>Pick a date in the calendar or type it as <code>dd/mm/yyyy</code>. If <strong>From</strong> is after <strong>To</strong>, the dates are swapped automatically.</li>
+        <li><strong>Element columns:</strong> for one category all its elements are shown, in the category's order. For all categories only elements with a value in the shown measurements are shown.</li>
+        <li><strong>Show element names</strong> switches the column headers between codes and names. The export follows it.</li>
+        <li>Measurements show the code, color, size and category as they were <strong>when measured</strong>. Later changes of an article do not change earlier measurements.</li>
+        <li>The label <span class="badge text-bg-warning">corrected</span> means an administrator corrected the measurement afterwards.</li>
+        <li><strong>Details</strong> opens a single measurement: who entered it and when, and who corrected it and when.</li>
+      </ul>
+    </section>
+
+    <section id="export" class="mb-5">
+      <h2 class="h4">Export to Excel and CSV</h2>
+      <ul>
+        <li><strong>Export to Excel</strong> and <strong>Export to CSV</strong> export <strong>all</strong> records matching the filters, not only the page shown. While the file is prepared, the button shows <em>Preparing file…</em>.</li>
+        <li>A measurement export can cover <strong>at most 366 days</strong>. For a longer period make several exports.</li>
+        <li><strong>Excel (.xlsx)</strong> is recommended for opening in Excel: numbers, dates and barcodes are written correctly.</li>
+        <li><strong>CSV</strong> is meant for other programs: columns are separated by <code>;</code>, the decimal sign is a comma. Opened in Excel, barcodes show as <code>8,05952E+12</code>. That is how Excel behaves; use the Excel export.</li>
+      </ul>
+    </section>
+
+    {% if is_admin %}
+    <section id="correct" class="mb-5">
+      <h2 class="h4">Correcting and deleting measurements <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <ul>
+        <li>In the measurement list click <strong>Edit</strong>. The employee number and the values can be corrected, not the article or the time of measuring. Click <strong>Save correction</strong>. Who corrected the measurement last and when is recorded; earlier values are not kept.</li>
+        <li><strong>Delete measurement</strong> removes it from the list and the export. It is not deleted for good: switch on <strong>Show deleted</strong>, open it and click <strong>Restore measurement</strong>.</li>
+        <li>Users with the role User do not see deleted measurements.</li>
+      </ul>
+    </section>
+
+    <section id="categories" class="mb-5">
+      <h2 class="h4">Categories <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <p>A category decides which elements are measured on its articles. Menu <strong>Administration → Categories</strong>.</p>
+      <ul>
+        <li><strong>New category</strong>: code and name. The code is unique regardless of upper or lower case.</li>
+        <li><strong>Elements</strong> next to a category opens the elements measured in it:
+          <ul>
+            <li>add an element with its <strong>order</strong>, which sets the order of the fields when measuring. The next number is suggested (steps of 10, so an element can be inserted in between later);</li>
+            <li>the order can be changed and saved;</li>
+            <li><strong>Remove</strong> takes the element out of the category. Saved measurements do not change.</li>
+          </ul>
+        </li>
+        <li>Categories, elements and articles are not deleted but <strong>deactivated</strong> (<strong>Deactivate</strong> / <strong>Activate</strong>). Inactive records are not offered when measuring, and the measurement history stays complete.</li>
+        <li>Once a category has measurements, its <strong>code cannot be changed</strong> (finding measurements depends on it). The name can be changed.</li>
+      </ul>
+    </section>
+
+    <section id="elements" class="mb-5">
+      <h2 class="h4">Elements <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <p>An element is a dimension that is measured, e.g. a length or a width. One element can be in several categories. Menu <strong>Administration → Elements</strong>.</p>
+      <ul>
+        <li><strong>New element</strong>: code (saved in upper case), name and unit (e.g. <code>cm</code>).</li>
+        <li>Once an element has measured values, its <strong>code and unit cannot be changed</strong>.
+          <ul>
+            <li>The name can be corrected, but the new name is also shown for earlier measurements in the list and the export.</li>
+            <li>If the element is to measure something else, create a <strong>new element</strong> and deactivate the old one.</li>
+          </ul>
+        </li>
+        <li><strong>Import CSV</strong>: columns <code>code;name;unit</code>, the first row is a header. Only new elements are imported; a code that already exists (also as an inactive element) is rejected. Example: <code>B05;Lunghezza totale;cm</code>. Then add the elements to categories.</li>
+        <li>The <strong>export</strong> follows the status filter and includes the categories of each element.</li>
+      </ul>
+    </section>
+
+    <section id="articles" class="mb-5">
+      <h2 class="h4">Articles <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <p>Menu <strong>Administration → Articles</strong>. Search by code or barcode, filter by category and status.</p>
+      <ul>
+        <li>An article has a code (up to 15 characters), color (up to 10), size (up to 10), category and barcode. Code, color and size are saved in upper case.</li>
+        <li>The barcode must be a valid <strong>EAN-13</strong> (13 digits with a correct check digit).</li>
+        <li>Within a company neither the barcode nor the combination of code, color and size may repeat.</li>
+        <li><strong>Import CSV</strong>: columns <code>code;color;size;category code;barcode</code>, the first row is a header. Example: <code>UMC250C;8984;50;MAGLIA;8059522105740</code>.
+          <ul>
+            <li>A new barcode adds an article. An existing barcode updates the article (an inactive one stays inactive).</li>
+            <li>The category must exist and be active.</li>
+            <li>Rows with errors are skipped and listed with the line number and reason; the valid rows are imported. The file can have up to 5 MB.</li>
+          </ul>
+        </li>
+        <li>Changing an article does not change saved measurements.</li>
+      </ul>
+    </section>
+
+    <section id="csv" class="mb-5">
+      <h2 class="h4">CSV files and Excel <span class="badge text-bg-secondary align-middle fs-6">administrator</span></h2>
+      <ul>
+        <li>In Excel: <strong>File → Save As</strong> and choose the type <strong>CSV UTF-8</strong> or <strong>CSV</strong>. With Croatian or Italian Windows settings Excel separates the columns with <code>;</code>, as needed.</li>
+        <li><strong>Format the barcode column as text</strong> before typing or pasting barcodes (right click → Format Cells → Text). Otherwise Excel turns the barcode into a number (<code>8,05952E+12</code>) and loses digits, and the import rejects the row.</li>
+        <li>If the import reports <em>Expected 5 columns, found 1</em>, the file is not separated with <code>;</code>, usually because it was saved with commas.</li>
+        <li>If it reports that the file cannot be read as CSV, an Excel workbook (<code>.xlsx</code>) or another format was chosen. Save it as CSV.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    <section id="faq" class="mb-5">
+      <h2 class="h4">Common problems</h2>
+      <dl>
+        <dt>Nothing happens after scanning</dt>
+        <dd>The cursor must be in the <strong>Barcode</strong> field. The scanner should send <kbd>Tab</kbd> or <kbd>Enter</kbd> after the barcode; otherwise press <kbd>Tab</kbd> after scanning. The same barcode is not loaded twice in a row: to load it again press <kbd>F2</kbd> and scan again.</dd>
+        <dt>I cannot save, it says "Enter at least one value."</dt>
+        <dd>All element fields are empty. Enter at least one value.</dd>
+        <dt>A measurement is missing from the list</dt>
+        <dd>Check the period (by default only today) and the other filters, or click <strong>Reset</strong>.</dd>
+        <dt>I cannot log in</dt>
+        <dd>Check that the right company is selected. After 5 wrong passwords the login is locked for 15 minutes. For a new password contact your administrator.</dd>
+        {% if is_admin %}
+        <dt>I cannot change the code of an element or a category</dt>
+        <dd>The element or category already has measurements. See <a href="#elements">Elements</a> and <a href="#categories">Categories</a>.</dd>
+        <dt>I cannot delete an article, element or category</dt>
+        <dd>Deleting is not possible, on purpose, so that the measurement history stays complete. Use <strong>Deactivate</strong>.</dd>
+        {% endif %}
+      </dl>
+    </section>
+
+    <section id="contact" class="mb-5">
+      <h2 class="h4">Contact</h2>
+      <p>For problems and questions this guide does not cover, contact <a href="mailto:filip.mesec@intinova.com.hr">filip.mesec@intinova.com.hr</a>.</p>
+    </section>
+  </div>
+</div>
+{% endwith %}
