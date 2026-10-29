@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 
+from . import throttle
 from .models import Tenant
 
 
@@ -30,6 +31,10 @@ class TenantLoginForm(forms.Form):
         username = cleaned_data.get('username')
         password = cleaned_data.get('password')
         if tenant and username and password:
+            if throttle.is_locked(tenant, username):
+                raise forms.ValidationError(
+                    _('Too many failed login attempts. Try again in %(minutes)d minutes.')
+                    % {'minutes': throttle.LOCK_MINUTES})
             self.user_cache = authenticate(self.request, username=username, password=password, tenant=tenant)
             if self.user_cache is None:
                 raise forms.ValidationError(_('Invalid company, username or password.'))

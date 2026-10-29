@@ -23,6 +23,7 @@
 
   <form id="entry-form" class="show-element-codes" method="post" action="{% url 'measurements:entry' %}"
         hx-post="{% url 'measurements:entry' %}" hx-target="#article-panel" hx-disabled-elt="#confirm-save"
+        hx-sync="this:drop"
         autocomplete="off" novalidate>
     {% csrf_token %}
     <div class="row g-3 mb-3">
@@ -40,7 +41,14 @@
       </div>
     </div>
 
-    <div id="article-panel" data-server-error="{% translate 'Server error, the measurement was not saved. Please try again.' %}"></div>
+    {# Errors of loading and saving; the panel and the entered values stay as they are #}
+    <div id="entry-message" aria-live="assertive"
+         data-save-error="{% translate 'Server error: the measurement was NOT saved. Please save again.' %}"
+         data-save-offline="{% translate 'No connection to the server: the measurement was NOT saved. Check the connection and save again.' %}"
+         data-load-error="{% translate 'Server error: the article could not be loaded. Please try again.' %}"
+         data-load-offline="{% translate 'No connection to the server: the article could not be loaded. Check the connection and try again.' %}"></div>
+
+    <div id="article-panel"></div>
   </form>
 
   <div class="modal" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-hidden="true">

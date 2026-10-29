@@ -82,6 +82,11 @@ class Element(AuditModel):
             models.UniqueConstraint(fields=['tenant', 'code'], name='element_code_unique_per_tenant'),
         ]
 
+    @staticmethod
+    def normalize_code(value):
+        """Element codes are always upper case, so B05 and b05 cannot both exist."""
+        return value.strip().upper()
+
     def __str__(self):
         return f'{self.code} - {self.name}'
 

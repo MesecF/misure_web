@@ -34,7 +34,8 @@
       try {
         const response = await fetch(link.href, {credentials: 'same-origin'});
         if (response.redirected) {
-          // Session expired: the server sent the login page instead of the file
+          // No file but a page: the login page (session expired) or the list with a message
+          // (e.g. date range too long for an export)
           window.location.href = response.url;
           return;
         }

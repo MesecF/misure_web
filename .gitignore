@@ -10,6 +10,9 @@ media/
 # Local settings and secrets
 .env
 
+# Saved Docker images (docker save) for copying to the server
+*.tar
+
 # Editors / OS
 .vscode/
 .idea/

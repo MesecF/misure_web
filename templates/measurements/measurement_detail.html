@@ -52,7 +52,7 @@
             <p>{% translate 'Employee number' %}: <strong>{{ measurement.employee_number }}</strong></p>
             <table class="table table-sm mb-0">
               <tbody>
-                {% for value in measurement.values.all %}
+                {% for value in values %}
                   <tr>
                     <th>{{ value.element_name }}</th>
                     <td class="text-end">{{ value.value }} {{ value.element_unit }}</td>

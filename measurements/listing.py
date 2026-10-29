@@ -21,8 +21,8 @@ ALL_CATEGORIES = 'all'
 
 class MeasurementFilter:
     """
-    Reads the filters from the query string. Each category has its own elements (the value
-    columns); the first active one is the default. category=all shows every category.
+    Reads the filters from the query string. All categories are shown unless one is chosen
+    (category=<pk>); each category has its own elements (the value columns).
     """
 
     def __init__(self, request):
@@ -31,23 +31,22 @@ class MeasurementFilter:
         today = timezone.localdate()
         self.date_from = parse_date(params.get('date_from'), today)
         self.date_to = parse_date(params.get('date_to'), today)
+        # Dates entered the wrong way round: the range between them, shown corrected in the form
+        if self.date_from > self.date_to:
+            self.date_from, self.date_to = self.date_to, self.date_from
         self.search = params.get('q', '').strip()
         self.color = params.get('color', '').strip()
         self.size = params.get('size', '').strip()
         employee = params.get('employee', '').strip()
-        self.employee = int(employee) if employee.isdigit() else None
+        self.employee = int(employee) if employee.isascii() and employee.isdigit() else None
         self.employee_text = employee
         # Deleted measurements are only shown to the admin, on request
         self.include_deleted = request.user.is_tenant_admin and params.get('deleted') == '1'
 
         self.categories = list(Category.objects.filter(tenant=self.tenant).order_by('-is_active', 'code'))
-        category_id = params.get('category', '')
-        self.all_categories = category_id == ALL_CATEGORIES and bool(self.categories)
-        self.category = None
-        if not self.all_categories:
-            self.category = next((c for c in self.categories if str(c.pk) == category_id), None)
-            if self.category is None:
-                self.category = next((c for c in self.categories if c.is_active), None)
+        category_id = params.get('category', ALL_CATEGORIES)
+        self.category = next((c for c in self.categories if str(c.pk) == category_id), None)
+        self.all_categories = self.category is None and bool(self.categories)
 
     @property
     def selected(self):
@@ -62,7 +61,9 @@ class MeasurementFilter:
         measurements = Measurement.objects.filter(tenant=self.tenant, measured_at__range=(start, end))
         if self.category:
             # Article and category data as they were when measured
-            measurements = measurements.filter(category_code__iexact=self.category.code)
+            # Exact match: the snapshot keeps the code as it was, and a category's code cannot
+            # change once it has measurements. Uses the (tenant, category_code) index.
+            measurements = measurements.filter(category_code=self.category.code)
         if self.search:
             measurements = measurements.filter(article_code__icontains=self.search) | measurements.filter(
                 article_barcode__icontains=self.search)

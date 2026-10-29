@@ -21,6 +21,7 @@ from .listing import MeasurementFilter, attach_values
 from .models import Measurement
 
 SESSION_EMPLOYEE_NUMBER = 'employee_number'
+MAX_EXPORT_DAYS = 366
 
 
 class MeasurementEntryView(TenantRequiredMixin, View):
@@ -114,6 +115,14 @@ class MeasurementExportView(TenantRequiredMixin, View):
         if file_format not in ('xlsx', 'csv'):
             raise Http404
         measurement_filter = MeasurementFilter(request)
+        # A very long range would keep a server worker busy for minutes (and could exhaust memory).
+        # Back to the list with a message; the page's download script follows the redirect.
+        if (measurement_filter.date_to - measurement_filter.date_from).days >= MAX_EXPORT_DAYS:
+            messages.error(request, _('An export can cover at most %(days)d days. Choose a shorter date range.')
+                           % {'days': MAX_EXPORT_DAYS})
+            params = request.GET.copy()
+            params.pop('labels', None)
+            return redirect(f"{reverse('measurements:list')}?{params.urlencode()}")
         measurements = measurement_filter.queryset()
         columns = measurement_filter.columns(measurements)
         measurements = attach_values(list(measurements.prefetch_related('values')), columns)
@@ -153,10 +162,11 @@ class MeasurementDetailView(TenantRequiredMixin, View):
 
     @staticmethod
     def get_measurement(request, pk):
-        return get_object_or_404(
-            Measurement.objects.select_related('created_by', 'updated_by', 'deleted_by').prefetch_related('values'),
-            pk=pk, tenant=request.tenant,
-        )
+        measurements = Measurement.objects.select_related('created_by', 'updated_by', 'deleted_by')
+        # Deleted measurements are only shown to the admin, as in the list
+        if not request.user.is_tenant_admin:
+            measurements = measurements.filter(deleted_at__isnull=True)
+        return get_object_or_404(measurements.prefetch_related('values'), pk=pk, tenant=request.tenant)
 
     @staticmethod
     def elements_for(measurement):
@@ -170,8 +180,13 @@ class MeasurementDetailView(TenantRequiredMixin, View):
 
     @staticmethod
     def render(request, measurement, form, employee_number, employee_error=''):
+        # Read-only view: values in the order of the elements (category order, then removed elements)
+        position = {element.pk: index for index, element in enumerate(form.elements)}
+        values = sorted(measurement.values.all(),
+                        key=lambda value: (position.get(value.element_id, len(position)), value.element_code))
         return render(request, 'measurements/measurement_detail.html', {
             'measurement': measurement,
+            'values': values,
             'form': form,
             'employee_number': employee_number,
             'employee_error': employee_error,

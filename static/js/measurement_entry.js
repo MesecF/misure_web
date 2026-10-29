@@ -13,8 +13,13 @@
   const emptyMessage = document.getElementById('confirm-empty');
   const saveButton = document.getElementById('confirm-save');
   const namesSwitch = document.getElementById('show-element-names');
+  const message = document.getElementById('entry-message');
   const LABELS_KEY = 'misure.showElementNames';
   let saving = false;
+  // A save request is on its way: no second save (Enter pressed again on a slow server)
+  let busy = false;
+  // Barcode of the article loaded or being loaded: the same barcode is not loaded twice in a row
+  let loadedBarcode = '';
 
   // Element codes (default) or names; the choice is remembered in this browser
   function showElementNames(show) {
@@ -54,8 +59,17 @@
 
   function newArticle() {
     barcode.value = '';
+    loadedBarcode = '';
     panel.replaceChildren();
+    message.replaceChildren();
     barcode.focus();
+  }
+
+  function showError(text) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger fw-semibold';
+    alert.textContent = text;
+    message.replaceChildren(alert);
   }
 
   function changeEmployee() {
@@ -64,6 +78,9 @@
   }
 
   function askToSave() {
+    if (busy) {
+      return;
+    }
     const filled = elementInputs().filter((input) => input.value.trim() !== '');
     summary.replaceChildren(...filled.map((input) => {
       const row = document.createElement('tr');
@@ -143,6 +160,9 @@
   });
 
   saveButton.addEventListener('click', () => {
+    if (busy) {
+      return;
+    }
     saving = true;
     modal.hide();
     form.requestSubmit();
@@ -162,12 +182,50 @@
     focusAndSelect(inputs.find((input) => input.classList.contains('is-invalid')) || inputs[0]);
   });
 
-  document.body.addEventListener('htmx:responseError', (event) => {
-    if (event.detail.target === panel) {
-      const alert = document.createElement('div');
-      alert.className = 'alert alert-danger';
-      alert.textContent = panel.dataset.serverError;
-      panel.replaceChildren(alert);
+  document.body.addEventListener('htmx:beforeRequest', (event) => {
+    const source = event.detail.elt;
+    if (source === barcode) {
+      // Enter loads explicitly; when the cursor then leaves the field, the browser reports
+      // a change once more. That second load would wipe values typed in the meantime.
+      if (barcode.value === loadedBarcode) {
+        event.preventDefault();
+        return;
+      }
+      loadedBarcode = barcode.value;
+    } else if (source === form) {
+      busy = true;
     }
   });
+
+  document.body.addEventListener('htmx:afterRequest', (event) => {
+    const source = event.detail.elt;
+    if (source === form) {
+      busy = false;
+    }
+    if (source !== form && source !== barcode) {
+      return;
+    }
+    if (event.detail.successful) {
+      message.replaceChildren();
+    } else if (source === barcode) {
+      // Not loaded: the same barcode can be tried again
+      loadedBarcode = '';
+    }
+  });
+
+  // Server error or no connection: the panel and the entered values stay, the message says what
+  // was not done. A save that failed must not look like a successful one.
+  function requestFailed(event, offline) {
+    const source = event.detail.elt;
+    if (source === form) {
+      showError(offline ? message.dataset.saveOffline : message.dataset.saveError);
+      const inputs = elementInputs();
+      focusAndSelect(inputs[inputs.length - 1]);
+    } else if (source === barcode) {
+      showError(offline ? message.dataset.loadOffline : message.dataset.loadError);
+    }
+  }
+
+  document.body.addEventListener('htmx:responseError', (event) => requestFailed(event, false));
+  document.body.addEventListener('htmx:sendError', (event) => requestFailed(event, true));
 })();

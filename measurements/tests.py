@@ -8,7 +8,7 @@ from django.urls import reverse
 from accounts.models import Tenant, User
 from catalog.models import Article, Category, CategoryElement, Element
 
-from .entry import parse_value
+from .entry import parse_employee_number, parse_value
 from .models import Measurement
 
 
@@ -159,12 +159,22 @@ class MeasurementListTests(MeasurementTestCase):
         response = self.client.get(self.url, params)
         return [m.employee_number for m in response.context['page_obj']]
 
-    def test_list_defaults_to_today_and_first_category(self):
+    def test_list_defaults_to_today_and_all_categories(self):
         response = self.client.get(self.url)
-        self.assertEqual(response.context['filter'].category, self.category)
+        self.assertTrue(response.context['filter'].all_categories)
         self.assertEqual(response.context['columns'], [self.length, self.width])
         rows = [m.element_values for m in response.context['page_obj']]
         self.assertEqual(rows, [[Decimal('13.0'), None], [Decimal('12.5'), Decimal('7.0')]])
+        # One category; an unknown one shows all
+        response = self.client.get(self.url, {'category': self.category.pk})
+        self.assertEqual(response.context['filter'].category, self.category)
+        self.assertTrue(self.client.get(self.url, {'category': '999'}).context['filter'].all_categories)
+
+    def test_dates_in_wrong_order_are_swapped(self):
+        response = self.client.get(self.url, {'date_from': '2026-10-31', 'date_to': '2026-10-01'})
+        measurement_filter = response.context['filter']
+        self.assertEqual((str(measurement_filter.date_from), str(measurement_filter.date_to)),
+                         ('2026-10-01', '2026-10-31'))
 
     def test_filters(self):
         self.assertEqual(self.listed(employee='111'), [111])
@@ -175,7 +185,7 @@ class MeasurementListTests(MeasurementTestCase):
 
     def test_all_categories(self):
         Measurement.objects.filter(pk=self.second.pk).update(category_code='OTHER')
-        self.assertEqual(self.listed(), [111])
+        self.assertEqual(self.listed(category=self.category.pk), [111])
         response = self.client.get(self.url, {'category': 'all'})
         self.assertTrue(response.context['filter'].all_categories)
         self.assertEqual([m.employee_number for m in response.context['page_obj']], [222, 111])
@@ -188,10 +198,37 @@ class MeasurementListTests(MeasurementTestCase):
 
     def test_removed_element_with_values_is_still_shown(self):
         CategoryElement.objects.filter(element=self.width).delete()
-        columns = self.client.get(self.url).context['columns']
-        self.assertEqual(columns, [self.length, self.width])
+        params = {'category': self.category.pk}
+        self.assertEqual(self.client.get(self.url, params).context['columns'], [self.length, self.width])
         Measurement.objects.filter(pk=self.first.pk).update(deleted_at='2026-01-01T00:00Z')
-        self.assertEqual(self.client.get(self.url).context['columns'], [self.length])
+        self.assertEqual(self.client.get(self.url, params).context['columns'], [self.length])
+
+    def test_superscript_digits_are_not_numbers(self):
+        self.assertEqual(self.listed(employee='\u00b2'), [])
+        self.assertEqual(parse_employee_number('\u00b2')[0], None)
+
+    def test_regular_user_does_not_see_deleted_measurement(self):
+        Measurement.objects.filter(pk=self.first.pk).update(deleted_at='2026-01-01T00:00Z')
+        detail = reverse('measurements:detail', args=[self.first.pk])
+        self.assertEqual(self.client.get(detail).status_code, 404)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(detail).status_code, 200)
+
+    def test_detail_shows_values_in_category_order(self):
+        CategoryElement.objects.filter(element=self.length).update(sort_order=99)
+        response = self.client.get(reverse('measurements:detail', args=[self.first.pk]))
+        self.assertEqual([value.element_code for value in response.context['values']], ['W', 'L'])
+
+    def test_xlsx_text_starting_with_equals_is_not_a_formula(self):
+        Measurement.objects.filter(pk=self.first.pk).update(article_color='=1+1')
+        self.length.name = '=SUM(A1)'
+        self.length.save()
+        response = self.client.get(reverse('measurements:export', args=['xlsx']), {'labels': 'names'})
+        sheet = load_workbook(BytesIO(response.content)).active
+        rows = list(sheet.values)
+        self.assertEqual(rows[0][7], '=SUM(A1) (cm)')
+        self.assertEqual(rows[2][3], '=1+1')
+        self.assertEqual({sheet['H1'].data_type, sheet['D3'].data_type}, {'s'})
 
     def test_other_tenant_sees_nothing(self):
         other_user = User.objects.create_user('operator', tenant=self.other_tenant, role='user')
@@ -255,6 +292,16 @@ class MeasurementListTests(MeasurementTestCase):
         self.assertEqual(rows[2][1], 111)
         self.assertEqual(rows[2][7:9], (12.5, 7))
         self.assertEqual(rows[2][9], 'operator')
+
+    def test_export_of_too_long_range_returns_to_list_with_message(self):
+        params = {'date_from': '2025-01-01', 'date_to': '2026-01-02', 'labels': 'names'}
+        response = self.client.get(reverse('measurements:export', args=['csv']), params, follow=True)
+        self.assertRedirects(response, f"{self.url}?date_from=2025-01-01&date_to=2026-01-02")
+        self.assertContains(response, 'An export can cover at most 366 days.')
+        # One year is fine
+        params['date_to'] = '2025-12-31'
+        self.assertEqual(self.client.get(reverse('measurements:export', args=['csv']), params)['Content-Type'],
+                         'text/csv; charset=utf-8')
 
     def test_export_csv(self):
         response = self.client.get(reverse('measurements:export', args=['csv']))

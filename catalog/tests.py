@@ -1,13 +1,16 @@
 from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.test import SimpleTestCase, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from openpyxl import load_workbook
 
 from accounts.models import Tenant, User
+from measurements.models import Measurement, MeasurementValue
 
-from .importers import import_articles
+from .importers import import_articles, import_elements
 from .models import Article, Category, CategoryElement, Element
 from .validators import ean13_is_valid
 
@@ -130,6 +133,88 @@ class ElementViewTests(CatalogTestCase):
     def test_regular_user_is_denied(self):
         self.client.force_login(self.user_a)
         self.assertEqual(self.client.get(reverse('catalog:element_list')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('catalog:element_import')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('catalog:element_export', args=['csv'])).status_code, 403)
+
+    def test_code_is_saved_in_upper_case_and_compared_regardless_of_case(self):
+        self.client.post(reverse('catalog:element_create'), {'code': ' b05 ', 'name': 'Length', 'unit': 'cm'})
+        self.assertEqual(Element.objects.get().code, 'B05')
+        response = self.client.post(reverse('catalog:element_create'), {'code': 'B05', 'name': 'Other', 'unit': 'cm'})
+        self.assertContains(response, 'An element with this code already exists.')
+
+    def test_export_follows_status_filter_and_lists_categories(self):
+        common = {'tenant': self.tenant_a, 'unit': 'cm', 'created_by': self.admin_a}
+        length = Element.objects.create(code='L1', name='Length', **common)
+        Element.objects.create(code='W1', name='Width', is_active=False, **common)
+        other = Category.objects.create(tenant=self.tenant_a, code='ADIDAS', name='Adidas', created_by=self.admin_a)
+        for category in (self.category_a, other):
+            CategoryElement.objects.create(tenant=self.tenant_a, category=category, element=length, sort_order=10,
+                                           created_by=self.admin_a)
+
+        response = self.client.get(reverse('catalog:element_export', args=['xlsx']), {'status': 'all'})
+        rows = list(load_workbook(BytesIO(response.content)).active.values)
+        self.assertEqual(rows[0][:5], ('Code', 'Name', 'Unit', 'Categories', 'Active'))
+        self.assertEqual([row[:5] for row in rows[1:]], [
+            ('L1', 'Length', 'cm', 'ADIDAS, NIKE', 'Yes'),
+            ('W1', 'Width', 'cm', None, 'No'),
+        ])
+
+        lines = self.client.get(reverse('catalog:element_export', args=['csv'])).content.decode('utf-8-sig').splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertTrue(lines[1].startswith('L1;Length;cm;ADIDAS, NIKE;Yes;admin;'))
+
+
+class ElementImportTests(CatalogTestCase):
+    HEADER = 'code;name;unit\n'
+
+    def run_import(self, rows, tenant=None, user=None):
+        return import_elements((self.HEADER + rows).encode(), tenant or self.tenant_a, user or self.admin_a)
+
+    def test_creates_elements_in_upper_case(self):
+        result = self.run_import('b05;Lunghezza;cm\nC01;Vita;cm\n')
+        self.assertEqual((result.created, result.rejected), (2, []))
+        self.assertEqual(list(Element.objects.values_list('code', 'name', 'unit', 'created_by')),
+                         [('B05', 'Lunghezza', 'cm', self.admin_a.pk), ('C01', 'Vita', 'cm', self.admin_a.pk)])
+
+    def test_existing_codes_are_rejected_also_when_inactive(self):
+        self.run_import('B05;Lunghezza;cm\nC01;Vita;cm\n')
+        Element.objects.filter(code='C01').update(is_active=False)
+        result = self.run_import('b05;Other;mm\nC01;Other;mm\nD;Nuovo;cm\n')
+        self.assertEqual(result.created, 1)
+        self.assertEqual([(row.line, row.reasons) for row in result.rejected], [
+            (2, ['Element "B05" already exists.']),
+            (3, ['Element "C01" already exists and is inactive.']),
+        ])
+        self.assertEqual(Element.objects.get(code='B05').name, 'Lunghezza')
+
+    def test_invalid_rows_are_rejected(self):
+        result = self.run_import(
+            'A1;Name;cm\n'               # line 2: valid
+            'A2;;cm\n'                   # 3: empty name
+            'A3;Name\n'                  # 4: missing column
+            'A4;Name;cm;x\n'             # 5: too many columns
+            f'{"X" * 21};Name;cm\n'      # 6: code too long
+            'a5;Name;cm\nA5;Other;cm\n'  # 7, 8: same code twice in the file
+        )
+        self.assertEqual(result.created, 1)
+        self.assertEqual([(row.line, row.reasons) for row in result.rejected], [
+            (3, ['Name is empty.']),
+            (4, ['Expected 3 columns, found 2.']),
+            (5, ['Too many columns.']),
+            (6, ['Code is longer than 20 characters.']),
+            (7, ['Code appears more than once in the file.']),
+            (8, ['Code appears more than once in the file.']),
+        ])
+
+    def test_other_tenant_codes_do_not_matter(self):
+        self.run_import('B05;Lunghezza;cm\n', self.tenant_b, self.admin_b)
+        self.assertEqual(self.run_import('B05;Lunghezza;cm\n').created, 1)
+
+    def test_upload_shows_result(self):
+        file = SimpleUploadedFile('elements.csv', b'h\nB05;Lunghezza;cm\nB05;Again;cm\n')
+        response = self.client.post(reverse('catalog:element_import'), {'file': file})
+        self.assertEqual(response.context['result'].created, 0)
+        self.assertContains(response, 'Code appears more than once in the file.')
 
 
 class CategoryElementTests(CatalogTestCase):
@@ -315,6 +400,39 @@ class ArticleImportTests(CatalogTestCase):
         self.assertEqual(Article.objects.get(tenant=self.tenant_b).code, 'B1')
 
 
+class InvalidImportFileTests(CatalogTestCase):
+    def upload(self, url_name, content):
+        file = SimpleUploadedFile('data.csv', content)
+        return self.client.post(reverse(url_name), {'file': file})
+
+    def test_non_csv_files_get_a_message_instead_of_an_error(self):
+        files = [
+            b'PK\x03\x04\x14\x00\x06\x00',                                 # Excel workbook (zip)
+            'code;name;unit\nB05;Lunghezza;cm\n'.encode('utf-16'),        # UTF-16 text
+            b'h\nA1;\x81\x98;M;NIKE;4006381333931\n',                      # neither UTF-8 nor Windows-1250
+            b'h\n"' + b'x' * 140000 + b'\n',                               # quote never closed, huge field
+        ]
+        for url_name in ('catalog:article_import', 'catalog:element_import'):
+            for content in files:
+                response = self.upload(url_name, content)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'The file cannot be read as CSV.')
+        self.assertFalse(Article.objects.exists() or Element.objects.exists())
+
+    def test_reimport_of_unchanged_articles_runs_a_fixed_number_of_queries(self):
+        def rows(count):
+            barcodes = ['4006381333931', '5901234123457', '9780201379624', '4012345678901', '0012345678905']
+            return ''.join(f'A{i};BLACK;M;NIKE;{barcodes[i]}\n' for i in range(count)).encode()
+
+        import_articles(b'h\n' + rows(5), self.tenant_a, self.admin_a)
+        with CaptureQueriesContext(connection) as two:
+            import_articles(b'h\n' + rows(2), self.tenant_a, self.admin_a)
+        with CaptureQueriesContext(connection) as five:
+            result = import_articles(b'h\n' + rows(5), self.tenant_a, self.admin_a)
+        self.assertEqual(result.unchanged, 5)
+        self.assertEqual(len(two), len(five))
+
+
 class ArticleViewTests(CatalogTestCase):
     def test_upload_shows_result(self):
         file = SimpleUploadedFile('articles.csv', b'h\nA1;BLACK;M;NIKE;4006381333931\nA2;X;M;PUMA;5901234123457\n')
@@ -394,3 +512,52 @@ class ArticleViewTests(CatalogTestCase):
         self.assertEqual(self.client.get(reverse('catalog:article_export', args=['csv'])).status_code, 403)
         self.client.force_login(self.admin_a)
         self.assertEqual(self.client.get(reverse('catalog:article_export', args=['pdf'])).status_code, 404)
+
+
+class UsedRecordLockTests(CatalogTestCase):
+    """Code and unit of a measured element and the code of a measured category cannot be changed."""
+
+    def setUp(self):
+        super().setUp()
+        self.element = Element.objects.create(tenant=self.tenant_a, code='L1', name='Length', unit='cm',
+                                              created_by=self.admin_a)
+        self.article = Article.objects.create(tenant=self.tenant_a, code='A1', color='BLACK', size='M',
+                                              category=self.category_a, barcode='4006381333931',
+                                              created_by=self.admin_a)
+
+    def measure(self):
+        measurement = Measurement(tenant=self.tenant_a, article=self.article, employee_number=1,
+                                  created_by=self.admin_a)
+        measurement.copy_article_data()
+        measurement.save()
+        value = MeasurementValue(measurement=measurement, element=self.element, value='12.5')
+        value.copy_element_data()
+        value.save()
+
+    def test_unused_element_can_be_changed(self):
+        url = reverse('catalog:element_update', args=[self.element.pk])
+        self.client.post(url, {'code': 'L2', 'name': 'Length 2', 'unit': 'mm'})
+        self.element.refresh_from_db()
+        self.assertEqual((self.element.code, self.element.name, self.element.unit), ('L2', 'Length 2', 'mm'))
+
+    def test_measured_element_keeps_code_and_unit(self):
+        self.measure()
+        url = reverse('catalog:element_update', args=[self.element.pk])
+        response = self.client.get(url)
+        self.assertContains(response, 'Cannot be changed because the element has measured values.', count=2)
+        self.assertTrue(response.context['form'].fields['code'].disabled)
+        # Posted code and unit are ignored, the name is saved
+        self.assertRedirects(self.client.post(url, {'code': 'L2', 'name': 'Total length', 'unit': 'mm'}),
+                             reverse('catalog:element_list'))
+        self.element.refresh_from_db()
+        self.assertEqual((self.element.code, self.element.name, self.element.unit), ('L1', 'Total length', 'cm'))
+
+    def test_measured_category_keeps_code(self):
+        url = reverse('catalog:category_update', args=[self.category_a.pk])
+        self.assertFalse(self.client.get(url).context['form'].fields['code'].disabled)
+        self.measure()
+        response = self.client.get(url)
+        self.assertContains(response, 'The code cannot be changed because the category has measurements.')
+        self.client.post(url, {'code': 'ADIDAS', 'name': 'Nike shoes'})
+        self.category_a.refresh_from_db()
+        self.assertEqual((self.category_a.code, self.category_a.name), ('NIKE', 'Nike shoes'))

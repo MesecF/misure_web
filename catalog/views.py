@@ -5,16 +5,20 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views import View
 from django.views.generic import CreateView, FormView, ListView, UpdateView
 
 from accounts.mixins import TenantAdminRequiredMixin, TenantAuditFormMixin, TenantQuerysetMixin
 
-from .export import to_csv, to_xlsx
-from .forms import ArticleForm, ArticleImportForm, CategoryElementForm, CategoryForm, ElementForm
-from .importers import import_articles
+from .export import article_header, article_rows, element_header, element_rows, export
+from .forms import ArticleForm, CategoryElementForm, CategoryForm, CsvImportForm, ElementForm
+from .importers import InvalidFile, import_articles, import_elements
 from .models import Article, Category, CategoryElement, Element
+
+# CSV import of a file that is not a text CSV (catalog.importers.InvalidFile)
+INVALID_FILE_MESSAGE = gettext_lazy(
+    'The file cannot be read as CSV. Save it from Excel as "CSV (semicolon delimited)" or "CSV UTF-8" and try again.')
 
 
 class SaveMessageMixin:
@@ -73,22 +77,54 @@ class CategoryToggleActiveView(ToggleActiveView):
 
 # Elements
 
+def filter_status(records, status_filter):
+    """Active (default), inactive or all records."""
+    if status_filter == 'active':
+        return records.filter(is_active=True)
+    if status_filter == 'inactive':
+        return records.filter(is_active=False)
+    return records
+
+
 class ElementListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
     model = Element
 
     def get_queryset(self):
         elements = super().get_queryset().prefetch_related('category_elements__category')
         self.status_filter = self.request.GET.get('status', 'active')
-        if self.status_filter == 'active':
-            elements = elements.filter(is_active=True)
-        elif self.status_filter == 'inactive':
-            elements = elements.filter(is_active=False)
-        return elements
+        return filter_status(elements, self.status_filter)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['status_filter'] = self.status_filter
+        context['filter_query'] = self.request.GET.urlencode()
         return context
+
+
+class ElementExportView(TenantAdminRequiredMixin, View):
+    """Exports the elements matching the list's status filter."""
+
+    def get(self, request, file_format):
+        if file_format not in ('xlsx', 'csv'):
+            raise Http404
+        elements = (Element.objects.filter(tenant=request.tenant)
+                    .select_related('created_by', 'updated_by').prefetch_related('category_elements__category'))
+        elements = filter_status(elements, request.GET.get('status', 'active'))
+        return export(file_format, _('Elements'), element_header(), element_rows(elements),
+                      f'elements_{timezone.localdate()}')
+
+
+class ElementImportView(TenantAdminRequiredMixin, FormView):
+    form_class = CsvImportForm
+    template_name = 'catalog/element_import.html'
+
+    def form_valid(self, form):
+        try:
+            result = import_elements(form.cleaned_data['file'].read(), self.request.tenant, self.request.user)
+        except InvalidFile:
+            form.add_error('file', INVALID_FILE_MESSAGE)
+            return self.form_invalid(form)
+        return self.render_to_response(self.get_context_data(form=CsvImportForm(), result=result))
 
 
 class ElementCreateView(TenantAdminRequiredMixin, TenantAuditFormMixin, SaveMessageMixin, CreateView):
@@ -174,13 +210,9 @@ def filter_articles(articles, search, category_filter, status_filter):
     """The article list's filters, also used by its export."""
     if search:
         articles = articles.filter(Q(code__icontains=search) | Q(barcode__icontains=search))
-    if category_filter.isdigit():
+    if category_filter.isascii() and category_filter.isdigit():
         articles = articles.filter(category_id=category_filter)
-    if status_filter == 'active':
-        articles = articles.filter(is_active=True)
-    elif status_filter == 'inactive':
-        articles = articles.filter(is_active=False)
-    return articles
+    return filter_status(articles, status_filter)
 
 
 class ArticleListView(TenantAdminRequiredMixin, TenantQuerysetMixin, ListView):
@@ -217,9 +249,8 @@ class ArticleExportView(TenantAdminRequiredMixin, View):
         articles = Article.objects.filter(tenant=request.tenant).select_related('category', 'created_by', 'updated_by')
         articles = filter_articles(articles, params.get('q', '').strip(), params.get('category', ''),
                                    params.get('status', 'active'))
-        filename = f'articles_{timezone.localdate()}'
-        export = to_xlsx if file_format == 'xlsx' else to_csv
-        return export(articles, filename)
+        return export(file_format, _('Articles'), article_header(), article_rows(articles),
+                      f'articles_{timezone.localdate()}')
 
 
 class ArticleCreateView(TenantAdminRequiredMixin, TenantAuditFormMixin, SaveMessageMixin, CreateView):
@@ -241,9 +272,13 @@ class ArticleToggleActiveView(ToggleActiveView):
 
 
 class ArticleImportView(TenantAdminRequiredMixin, FormView):
-    form_class = ArticleImportForm
+    form_class = CsvImportForm
     template_name = 'catalog/article_import.html'
 
     def form_valid(self, form):
-        result = import_articles(form.cleaned_data['file'].read(), self.request.tenant, self.request.user)
-        return self.render_to_response(self.get_context_data(form=ArticleImportForm(), result=result))
+        try:
+            result = import_articles(form.cleaned_data['file'].read(), self.request.tenant, self.request.user)
+        except InvalidFile:
+            form.add_error('file', INVALID_FILE_MESSAGE)
+            return self.form_invalid(form)
+        return self.render_to_response(self.get_context_data(form=CsvImportForm(), result=result))

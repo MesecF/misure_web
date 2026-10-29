@@ -1,6 +1,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from measurements.models import Measurement
+
 from .models import Article, Category, CategoryElement, Element
 
 
@@ -28,6 +30,10 @@ class CategoryForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, tenant, **kwargs):
         self.tenant = tenant
         super().__init__(*args, **kwargs)
+        # Measurements are found by the category code they were taken with: a new code would hide them
+        if self.instance.pk and Measurement.objects.filter(tenant=tenant, category_code=self.instance.code).exists():
+            self.fields['code'].disabled = True
+            self.fields['code'].help_text = _('The code cannot be changed because the category has measurements.')
 
     def clean_code(self):
         code = self.cleaned_data['code'].strip()
@@ -45,10 +51,18 @@ class ElementForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, tenant, **kwargs):
         self.tenant = tenant
         super().__init__(*args, **kwargs)
+        # Measured values keep their meaning: code and unit are fixed once used, the name can be corrected
+        if self.instance.pk and self.instance.values.exists():
+            for name in ('code', 'unit'):
+                self.fields[name].disabled = True
+                self.fields[name].help_text = _('Cannot be changed because the element has measured values.')
+            self.fields['name'].help_text = _(
+                'The element has measured values: a new name is also shown for earlier measurements '
+                'in the measurement list and export.')
 
     def clean_code(self):
-        code = self.cleaned_data['code']
-        duplicates = Element.objects.filter(tenant=self.tenant, code=code).exclude(pk=self.instance.pk)
+        code = Element.normalize_code(self.cleaned_data['code'])
+        duplicates = Element.objects.filter(tenant=self.tenant, code__iexact=code).exclude(pk=self.instance.pk)
         if duplicates.exists():
             raise forms.ValidationError(_('An element with this code already exists.'))
         return code
@@ -129,7 +143,7 @@ class ArticleForm(BootstrapFormMixin, forms.ModelForm):
         return barcode
 
 
-class ArticleImportForm(forms.Form):
+class CsvImportForm(forms.Form):
     MAX_SIZE_MB = 5
 
     file = forms.FileField(

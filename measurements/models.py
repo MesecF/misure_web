@@ -47,6 +47,7 @@ class Measurement(AuditModel):
         verbose_name_plural = _('measurements')
         indexes = [
             models.Index(fields=['tenant', 'measured_at'], name='measurement_tenant_time_idx'),
+            models.Index(fields=['tenant', 'category_code'], name='measurement_tenant_cat_idx'),
         ]
 
     def __str__(self):

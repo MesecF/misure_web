@@ -1,0 +1,16 @@
+# Not part of the image: local environment, secrets, build output and repository files
+.venv/
+.env
+.git/
+.gitignore
+.dockerignore
+__pycache__/
+*.py[cod]
+staticfiles/
+media/
+deploy/
+*.tar
+.vscode/
+.idea/
+Dockerfile
+docker-compose.yml

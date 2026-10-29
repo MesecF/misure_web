@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
+from . import throttle
+
 
 class TenantModelBackend(ModelBackend):
     """
@@ -10,6 +12,9 @@ class TenantModelBackend(ModelBackend):
 
     def authenticate(self, request, username=None, password=None, tenant=None, **kwargs):
         if username is None or password is None:
+            return None
+        # Too many recent failures: refused even with the right password (accounts/throttle.py)
+        if throttle.is_locked(tenant, username):
             return None
         User = get_user_model()
         users = User._default_manager.filter(username=username)
@@ -21,7 +26,8 @@ class TenantModelBackend(ModelBackend):
         if user is None:
             # Run the hasher anyway to keep response time the same as for a wrong password
             User().set_password(password)
-            return None
-        if user.check_password(password) and self.user_can_authenticate(user):
+        elif user.check_password(password) and self.user_can_authenticate(user):
+            throttle.clear_failures(tenant, username)
             return user
+        throttle.record_failure(tenant, username)
         return None

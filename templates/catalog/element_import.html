@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate 'Import elements' %} · Misure{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-3">{% translate 'Import elements' %}</h1>
+
+  {% include 'partials/import_result.html' %}
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include 'partials/form_fields.html' %}
+            <button type="submit" class="btn btn-primary">{% translate 'Import' %}</button>
+            <a href="{% url 'catalog:element_list' %}" class="btn btn-link">{% translate 'Back to elements' %}</a>
+          </form>
+        </div>
+        <div class="card-footer small">
+          <p class="mb-1"><strong>{% translate 'File format' %}</strong></p>
+          <ul class="mb-1">
+            <li>{% translate 'Columns separated by a semicolon (;), in this order:' %}
+              <code>{% translate 'code' %};{% translate 'name' %};{% translate 'unit' %}</code></li>
+            <li>{% translate 'The first row is a header and is ignored.' %}</li>
+            <li>{% translate 'All columns are required. The code is saved in upper case.' %}</li>
+            <li>{% translate 'Only new elements are imported: a code that already exists, also as an inactive element, is rejected.' %}</li>
+            <li>{% translate 'Rows with errors are skipped and listed.' %}</li>
+          </ul>
+          <p class="mb-0">{% translate 'Example' %}: <code>{% translate 'code' %};{% translate 'name' %};{% translate 'unit' %}</code> / <code>B05;Lunghezza totale;cm</code></p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

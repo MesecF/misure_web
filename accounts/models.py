@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -39,7 +41,10 @@ class User(AbstractUser):
         ADMIN = 'admin', _('Administrator')
         USER = 'user', _('User')
 
-    username = models.CharField(_('username'), max_length=150)
+    username = models.CharField(
+        _('username'), max_length=150, validators=[UnicodeUsernameValidator()],
+        help_text=_('Letters, digits and @ . + - _ only.'),
+    )
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.PROTECT,
@@ -109,3 +114,22 @@ class AuditModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class LoginFailure(models.Model):
+    """A failed login attempt. Recent failures lock that username for a while (accounts/throttle.py)."""
+
+    tenant = models.ForeignKey(
+        Tenant, on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name=_('tenant')
+    )
+    username = models.CharField(_('username'), max_length=150)
+    failed_at = models.DateTimeField(_('failed at'), default=timezone.now)
+
+    class Meta:
+        db_table = 'login_failure'
+        verbose_name = _('login failure')
+        verbose_name_plural = _('login failures')
+        indexes = [models.Index(fields=['username', 'failed_at'], name='login_failure_user_time_idx')]
+
+    def __str__(self):
+        return f'{self.username} @ {self.failed_at:%Y-%m-%d %H:%M}'

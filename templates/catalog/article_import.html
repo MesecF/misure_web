@@ -6,41 +6,7 @@
 {% block content %}
   <h1 class="h3 mb-3">{% translate 'Import articles' %}</h1>
 
-  {% if result %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h2 class="h5">{% translate 'Import result' %}</h2>
-        <div class="d-flex flex-wrap gap-2 mb-0">
-          <span class="badge text-bg-success fs-6">{% translate 'New' %}: {{ result.created }}</span>
-          <span class="badge text-bg-primary fs-6">{% translate 'Updated' %}: {{ result.updated }}</span>
-          <span class="badge text-bg-secondary fs-6">{% translate 'Unchanged' %}: {{ result.unchanged }}</span>
-          <span class="badge {% if result.rejected %}text-bg-danger{% else %}text-bg-light border{% endif %} fs-6">{% translate 'Rejected' %}: {{ result.rejected|length }}</span>
-        </div>
-      </div>
-      {% if result.rejected %}
-        <div class="table-responsive">
-          <table class="table table-sm mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th class="text-end">{% translate 'Line' %}</th>
-                <th>{% translate 'Content' %}</th>
-                <th>{% translate 'Reason' %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in result.rejected %}
-                <tr>
-                  <td class="text-end">{{ row.line }}</td>
-                  <td class="font-monospace small">{{ row.content }}</td>
-                  <td class="text-danger">{{ row.reasons|join:' ' }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
-    </div>
-  {% endif %}
+  {% include 'partials/import_result.html' with updates=True %}
 
   <div class="row">
     <div class="col-lg-8">

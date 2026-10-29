@@ -54,12 +54,16 @@ LOGOUT_REDIRECT_URL = 'login'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Serves the collected static files in production (gunicorn has no static file serving)
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'accounts.middleware.DefaultLanguageMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Turns the login redirect of HTMX requests into a full page redirect (session ended)
+    'accounts.middleware.HtmxLoginRedirectMiddleware',
     # Every page requires login unless the view is marked with login_not_required
     'django.contrib.auth.middleware.LoginRequiredMiddleware',
     'accounts.middleware.TenantMiddleware',
@@ -139,5 +143,40 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Compressed copies (gzip/brotli) made by collectstatic; without hashed names, so templates
+# work without a collectstatic run (development, tests)
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
+
+
+# Production behind nginx with HTTPS (DJANGO_HTTPS=True): nginx terminates HTTPS and tells
+# Django through X-Forwarded-Proto; cookies are only sent over HTTPS
+
+CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS')
+
+if os.environ.get('DJANGO_HTTPS', 'False') == 'True':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # Browsers remember to use only HTTPS for this host (not its subdomains: other applications
+    # share the parent domain). Start with a day; raise to a year (31536000) once all is well.
+    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '86400'))
+
+
+# Errors go to the console, which is the container log (docker/podman logs)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'INFO'},
+        # Only server errors (500) with their traceback, not 403/404 responses
+        'django.request': {'level': 'ERROR'},
+    },
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

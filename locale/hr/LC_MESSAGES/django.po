@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-27 12:06+0100\n"
+"POT-Creation-Date: 2026-10-29 15:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,119 +34,177 @@ msgstr "Ovlasti"
 msgid "Important dates"
 msgstr "Važni datumi"
 
-#: accounts/forms.py:13
+#: accounts/forms.py:14
 msgid "Company"
 msgstr "Tvrtka"
 
-#: accounts/forms.py:14
+#: accounts/forms.py:15
 msgid "Select company"
 msgstr "Odaberite tvrtku"
 
-#: accounts/forms.py:16
+#: accounts/forms.py:17
 msgid "Username"
 msgstr "Korisničko ime"
 
-#: accounts/forms.py:17
+#: accounts/forms.py:18
 msgid "Password"
 msgstr "Lozinka"
 
-#: accounts/forms.py:35
+#: accounts/forms.py:36
+#, python-format
+msgid "Too many failed login attempts. Try again in %(minutes)d minutes."
+msgstr ""
+"Previše neuspjelih pokušaja prijave. Pokušajte ponovno za %(minutes)d minuta."
+
+#: accounts/forms.py:40
 msgid "Invalid company, username or password."
 msgstr "Neispravna tvrtka, korisničko ime ili lozinka."
 
-#: accounts/models.py:11 catalog/models.py:14 catalog/models.py:34
-#: catalog/models.py:71 templates/catalog/article_import.html:60
-#: templates/catalog/article_import.html:68
+#: accounts/models.py:13 catalog/models.py:14 catalog/models.py:34
+#: catalog/models.py:71 templates/catalog/article_import.html:26
+#: templates/catalog/article_import.html:34
+#: templates/catalog/element_import.html:26
+#: templates/catalog/element_import.html:32
 msgid "code"
 msgstr "šifra"
 
-#: accounts/models.py:12 catalog/models.py:15 catalog/models.py:72
+#: accounts/models.py:14 catalog/models.py:15 catalog/models.py:72
+#: templates/catalog/element_import.html:26
+#: templates/catalog/element_import.html:32
 msgid "name"
 msgstr "naziv"
 
-#: accounts/models.py:13 catalog/models.py:16 catalog/models.py:39
+#: accounts/models.py:15 catalog/models.py:16 catalog/models.py:39
 #: catalog/models.py:74
 msgid "active"
 msgstr "aktivan"
 
-#: accounts/models.py:18 accounts/models.py:49 catalog/models.py:13
-#: catalog/models.py:33 catalog/models.py:70 catalog/models.py:93
-#: measurements/models.py:18
+#: accounts/models.py:20 accounts/models.py:54 accounts/models.py:123
+#: catalog/models.py:13 catalog/models.py:33 catalog/models.py:70
+#: catalog/models.py:98 measurements/models.py:18
 msgid "tenant"
 msgstr "tvrtka"
 
-#: accounts/models.py:19
+#: accounts/models.py:21
 msgid "tenants"
 msgstr "tvrtke"
 
-#: accounts/models.py:39
+#: accounts/models.py:41
 msgid "Administrator"
 msgstr "Administrator"
 
-#: accounts/models.py:40
+#: accounts/models.py:42
 msgid "User"
 msgstr "Korisnik"
 
-#: accounts/models.py:42
+#: accounts/models.py:45 accounts/models.py:125
 msgid "username"
 msgstr "korisničko ime"
 
-#: accounts/models.py:51
+#: accounts/models.py:46
+msgid "Letters, digits and @ . + - _ only."
+msgstr "Samo slova, brojke i @ . + - _"
+
+#: accounts/models.py:56
 msgid "role"
 msgstr "uloga"
 
-#: accounts/models.py:58
+#: accounts/models.py:63
 msgid "user"
 msgstr "korisnik"
 
-#: accounts/models.py:59
+#: accounts/models.py:64
 msgid "users"
 msgstr "korisnici"
 
-#: accounts/models.py:64
+#: accounts/models.py:69
 msgid "This tenant already has a user with this username."
 msgstr "Ova tvrtka već ima korisnika s tim korisničkim imenom."
 
-#: accounts/models.py:70
+#: accounts/models.py:75
 msgid "A superadmin with this username already exists."
 msgstr "Superadmin s tim korisničkim imenom već postoji."
 
-#: accounts/models.py:75
+#: accounts/models.py:80
 msgid "This tenant already has a user with this role."
 msgstr "Ova tvrtka već ima korisnika s tom ulogom."
 
-#: accounts/models.py:81
+#: accounts/models.py:86
 msgid ""
 "Tenant users must have a role; superadmins must not have a tenant or role."
 msgstr ""
 "Korisnik tvrtke mora imati ulogu; superadmin ne smije imati tvrtku ni ulogu."
 
-#: accounts/models.py:93
+#: accounts/models.py:98
 msgid "created at"
 msgstr "kreirano"
 
-#: accounts/models.py:98
+#: accounts/models.py:103
 msgid "created by"
 msgstr "kreirao"
 
-#: accounts/models.py:100
+#: accounts/models.py:105
 msgid "updated at"
 msgstr "izmijenjeno"
 
-#: accounts/models.py:107
+#: accounts/models.py:112
 msgid "updated by"
 msgstr "izmijenio"
 
-#: catalog/export.py:9 catalog/importers.py:126
-#: templates/catalog/article_list.html:47
+#: accounts/models.py:126
+msgid "failed at"
+msgstr "neuspjelo u"
+
+#: accounts/models.py:130
+msgid "login failure"
+msgstr "neuspjela prijava"
+
+#: accounts/models.py:131
+msgid "login failures"
+msgstr "neuspjele prijave"
+
+#: catalog/export.py:10
+msgid "Yes"
+msgstr "Da"
+
+#: catalog/export.py:10
+msgid "No"
+msgstr "Ne"
+
+#: catalog/export.py:16 templates/catalog/article_list.html:33
+#: templates/catalog/article_list.html:66
+#: templates/catalog/category_list.html:29
+#: templates/catalog/element_list.html:21
+#: templates/catalog/element_list.html:55
+msgid "Active"
+msgstr "Aktivan"
+
+#: catalog/export.py:16
+msgid "Created by"
+msgstr "Kreirao"
+
+#: catalog/export.py:16
+msgid "Created at"
+msgstr "Kreirano"
+
+#: catalog/export.py:16
+msgid "Changed by"
+msgstr "Izmijenio"
+
+#: catalog/export.py:16
+msgid "Changed at"
+msgstr "Izmijenjeno"
+
+#: catalog/export.py:20 catalog/export.py:30 catalog/importers.py:158
+#: catalog/importers.py:223 templates/catalog/article_list.html:47
 #: templates/catalog/category_elements.html:21
 #: templates/catalog/category_list.html:16
-#: templates/catalog/element_list.html:26
+#: templates/catalog/element_list.html:32
 #: templates/measurements/measurement_list.html:87
 msgid "Code"
 msgstr "Šifra"
 
-#: catalog/export.py:9 catalog/importers.py:126 measurements/export.py:10
+#: catalog/export.py:20 catalog/importers.py:158 measurements/export.py:10
 #: templates/catalog/article_list.html:48
 #: templates/measurements/measurement_detail.html:20
 #: templates/measurements/measurement_list.html:56
@@ -155,7 +213,7 @@ msgstr "Šifra"
 msgid "Color"
 msgstr "Boja"
 
-#: catalog/export.py:9 catalog/importers.py:126 measurements/export.py:10
+#: catalog/export.py:20 catalog/importers.py:158 measurements/export.py:10
 #: templates/catalog/article_list.html:49
 #: templates/measurements/measurement_detail.html:21
 #: templates/measurements/measurement_list.html:60
@@ -164,7 +222,7 @@ msgstr "Boja"
 msgid "Size"
 msgstr "Veličina"
 
-#: catalog/export.py:9 catalog/importers.py:126 measurements/export.py:11
+#: catalog/export.py:20 catalog/importers.py:158 measurements/export.py:11
 #: templates/catalog/article_list.html:24
 #: templates/catalog/article_list.html:50
 #: templates/measurements/measurement_detail.html:22
@@ -174,62 +232,61 @@ msgstr "Veličina"
 msgid "Category"
 msgstr "Kategorija"
 
-#: catalog/export.py:9
+#: catalog/export.py:20
 msgid "Category name"
 msgstr "Naziv kategorije"
 
-#: catalog/export.py:9 catalog/importers.py:126 measurements/export.py:10
-#: templates/catalog/article_list.html:51 templates/measurements/entry.html:35
+#: catalog/export.py:20 catalog/importers.py:158 measurements/export.py:10
+#: templates/catalog/article_list.html:51 templates/measurements/entry.html:36
 #: templates/measurements/measurement_list.html:90
 msgid "Barcode"
 msgstr "Barkod"
 
-#: catalog/export.py:9 templates/catalog/article_list.html:33
-#: templates/catalog/article_list.html:66
-#: templates/catalog/category_list.html:29
-#: templates/catalog/element_list.html:15
-#: templates/catalog/element_list.html:49
-msgid "Active"
-msgstr "Aktivan"
+#: catalog/export.py:30 catalog/importers.py:223
+#: templates/catalog/category_elements.html:22
+#: templates/catalog/category_list.html:17
+#: templates/catalog/element_list.html:33
+msgid "Name"
+msgstr "Naziv"
 
-#: catalog/export.py:10
-msgid "Created by"
-msgstr "Kreirao"
+#: catalog/export.py:30 catalog/importers.py:223
+#: templates/catalog/category_elements.html:23
+#: templates/catalog/element_list.html:34
+msgid "Unit"
+msgstr "Jedinica"
 
-#: catalog/export.py:10
-msgid "Created at"
-msgstr "Kreirano"
-
-#: catalog/export.py:10
-msgid "Changed by"
-msgstr "Izmijenio"
-
-#: catalog/export.py:10
-msgid "Changed at"
-msgstr "Izmijenjeno"
-
-#: catalog/export.py:17
-msgid "Yes"
-msgstr "Da"
-
-#: catalog/export.py:17
-msgid "No"
-msgstr "Ne"
-
-#: catalog/export.py:23 templates/base.html:34
-#: templates/catalog/article_list.html:4 templates/catalog/article_list.html:8
-msgid "Articles"
-msgstr "Artikli"
+#: catalog/export.py:30 templates/base.html:32
+#: templates/catalog/category_list.html:4
+#: templates/catalog/category_list.html:8
+#: templates/catalog/element_list.html:35
+msgid "Categories"
+msgstr "Kategorije"
 
 #: catalog/forms.py:36
+msgid "The code cannot be changed because the category has measurements."
+msgstr "Šifra se ne može mijenjati jer kategorija ima mjerenja."
+
+#: catalog/forms.py:42
 msgid "A category with this code already exists."
 msgstr "Kategorija s tom šifrom već postoji."
 
-#: catalog/forms.py:53
+#: catalog/forms.py:58
+msgid "Cannot be changed because the element has measured values."
+msgstr "Ne može se mijenjati jer element ima izmjerene vrijednosti."
+
+#: catalog/forms.py:60
+msgid ""
+"The element has measured values: a new name is also shown for earlier "
+"measurements in the measurement list and export."
+msgstr ""
+"Element ima izmjerene vrijednosti: novi naziv prikazuje se i za ranija "
+"mjerenja u listi mjerenja i izvozu."
+
+#: catalog/forms.py:67
 msgid "An element with this code already exists."
 msgstr "Element s tom šifrom već postoji."
 
-#: catalog/forms.py:75
+#: catalog/forms.py:89
 msgid ""
 "Unique within the category. Numbering in steps of 10 leaves room to insert "
 "elements later."
@@ -237,11 +294,11 @@ msgstr ""
 "Jedinstven unutar kategorije. Numeriranje u koracima po 10 ostavlja mjesta "
 "za kasnije umetanje elemenata."
 
-#: catalog/forms.py:81
+#: catalog/forms.py:95
 msgid "This category already has an element with this sort order."
 msgstr "Ova kategorija već ima element s tim rednim brojem."
 
-#: catalog/forms.py:119 catalog/importers.py:155
+#: catalog/forms.py:133 catalog/importers.py:187
 #, python-format
 msgid ""
 "An article with this code, color and size already exists (barcode "
@@ -249,63 +306,77 @@ msgid ""
 msgstr ""
 "Artikl s tom šifrom, bojom i veličinom već postoji (barkod %(barcode)s)."
 
-#: catalog/forms.py:128
+#: catalog/forms.py:142
 msgid "An article with this barcode already exists."
 msgstr "Artikl s tim barkodom već postoji."
 
-#: catalog/forms.py:136
+#: catalog/forms.py:150
 msgid "CSV file"
 msgstr "CSV datoteka"
 
-#: catalog/forms.py:143
+#: catalog/forms.py:157
 #, python-format
 msgid "The file is larger than %(size)d MB."
 msgstr "Datoteka je veća od %(size)d MB."
 
-#: catalog/importers.py:114
+#: catalog/importers.py:84
 #, python-format
 msgid "Expected %(count)d columns, found %(found)d."
 msgstr "Očekivano stupaca: %(count)d, pronađeno: %(found)d."
 
-#: catalog/importers.py:116
+#: catalog/importers.py:86
 msgid "Too many columns."
 msgstr "Previše stupaca."
 
-#: catalog/importers.py:129
+#: catalog/importers.py:161 catalog/importers.py:227
 #, python-format
 msgid "%(field)s is empty."
 msgstr "%(field)s: polje je prazno."
 
-#: catalog/importers.py:133
+#: catalog/importers.py:165 catalog/importers.py:229
 #, python-format
 msgid "%(field)s is longer than %(max)d characters."
 msgstr "%(field)s: dulje od %(max)d znakova."
 
-#: catalog/importers.py:138
+#: catalog/importers.py:170
 #, python-format
 msgid "Category \"%(code)s\" does not exist."
 msgstr "Kategorija \"%(code)s\" ne postoji."
 
-#: catalog/importers.py:140
+#: catalog/importers.py:172
 #, python-format
 msgid "Category \"%(code)s\" is inactive."
 msgstr "Kategorija \"%(code)s\" je neaktivna."
 
-#: catalog/importers.py:145 catalog/validators.py:16
+#: catalog/importers.py:177 catalog/validators.py:16
 #, python-format
 msgid "\"%(value)s\" is not a valid EAN-13 barcode."
 msgstr "\"%(value)s\" nije ispravan EAN-13 barkod."
 
-#: catalog/importers.py:147
+#: catalog/importers.py:179
 msgid "Barcode appears more than once in the file."
 msgstr "Barkod se u datoteci pojavljuje više puta."
 
-#: catalog/importers.py:152
+#: catalog/importers.py:184
 msgid "The same code, color and size appear more than once in the file."
 msgstr "Ista šifra, boja i veličina pojavljuju se u datoteci više puta."
 
-#: catalog/models.py:21 catalog/models.py:37 catalog/models.py:96
-#: templates/catalog/article_import.html:68
+#: catalog/importers.py:233
+msgid "Code appears more than once in the file."
+msgstr "Šifra se u datoteci pojavljuje više puta."
+
+#: catalog/importers.py:236
+#, python-format
+msgid "Element \"%(code)s\" already exists."
+msgstr "Element \"%(code)s\" već postoji."
+
+#: catalog/importers.py:238
+#, python-format
+msgid "Element \"%(code)s\" already exists and is inactive."
+msgstr "Element \"%(code)s\" već postoji i neaktivan je."
+
+#: catalog/models.py:21 catalog/models.py:37 catalog/models.py:101
+#: templates/catalog/article_import.html:34
 msgid "category"
 msgstr "kategorija"
 
@@ -314,20 +385,20 @@ msgid "categories"
 msgstr "kategorije"
 
 #: catalog/models.py:35 measurements/models.py:27
-#: templates/catalog/article_import.html:60
-#: templates/catalog/article_import.html:68
+#: templates/catalog/article_import.html:26
+#: templates/catalog/article_import.html:34
 msgid "color"
 msgstr "boja"
 
 #: catalog/models.py:36 measurements/models.py:28
-#: templates/catalog/article_import.html:60
-#: templates/catalog/article_import.html:68
+#: templates/catalog/article_import.html:26
+#: templates/catalog/article_import.html:34
 msgid "size"
 msgstr "veličina"
 
 #: catalog/models.py:38 measurements/models.py:29
-#: templates/catalog/article_import.html:60
-#: templates/catalog/article_import.html:68
+#: templates/catalog/article_import.html:26
+#: templates/catalog/article_import.html:34
 msgid "barcode"
 msgstr "barkod"
 
@@ -343,11 +414,11 @@ msgstr "artikli"
 msgid "Category belongs to a different tenant."
 msgstr "Kategorija pripada drugoj tvrtki."
 
-#: catalog/models.py:73 measurements/models.py:77
+#: catalog/models.py:73 measurements/models.py:78
 msgid "unit of measure"
 msgstr "jedinica mjere"
 
-#: catalog/models.py:79 catalog/models.py:99 measurements/models.py:73
+#: catalog/models.py:79 catalog/models.py:104 measurements/models.py:74
 msgid "element"
 msgstr "element"
 
@@ -355,61 +426,81 @@ msgstr "element"
 msgid "elements"
 msgstr "elementi"
 
-#: catalog/models.py:101
+#: catalog/models.py:106
 msgid "sort order"
 msgstr "redni broj"
 
-#: catalog/models.py:108
+#: catalog/models.py:113
 msgid "category element"
 msgstr "element kategorije"
 
-#: catalog/models.py:109
+#: catalog/models.py:114
 msgid "category elements"
 msgstr "elementi kategorije"
 
-#: catalog/models.py:122
+#: catalog/models.py:127
 msgid "Belongs to a different tenant."
 msgstr "Pripada drugoj tvrtki."
 
-#: catalog/views.py:23
+#: catalog/views.py:21
+msgid ""
+"The file cannot be read as CSV. Save it from Excel as \"CSV (semicolon "
+"delimited)\" or \"CSV UTF-8\" and try again."
+msgstr ""
+"Datoteka se ne može pročitati kao CSV. U Excelu je spremite kao \"CSV "
+"(razdvojeno točka-zarezom)\" ili \"CSV UTF-8\" i pokušajte ponovno."
+
+#: catalog/views.py:27
 #, python-format
 msgid "\"%(record)s\" saved."
 msgstr "\"%(record)s\" spremljeno."
 
-#: catalog/views.py:40
+#: catalog/views.py:44
 #, python-format
 msgid "\"%(record)s\" activated."
 msgstr "\"%(record)s\" aktivirano."
 
-#: catalog/views.py:42
+#: catalog/views.py:46
 #, python-format
 msgid "\"%(record)s\" deactivated."
 msgstr "\"%(record)s\" deaktivirano."
 
-#: catalog/views.py:133
+#: catalog/views.py:113 templates/base.html:33
+#: templates/catalog/category_elements.html:4
+#: templates/catalog/category_list.html:35
+#: templates/catalog/element_list.html:4 templates/catalog/element_list.html:8
+msgid "Elements"
+msgstr "Elementi"
+
+#: catalog/views.py:169
 #, python-format
 msgid "\"%(element)s\" added."
 msgstr "\"%(element)s\" dodano."
 
-#: catalog/views.py:155
+#: catalog/views.py:191
 #, python-format
 msgid "\"%(element)s\" saved."
 msgstr "\"%(element)s\" spremljeno."
 
-#: catalog/views.py:167
+#: catalog/views.py:203
 #, python-format
 msgid "\"%(element)s\" removed from the category."
 msgstr "\"%(element)s\" uklonjeno iz kategorije."
 
-#: config/settings.py:120
+#: catalog/views.py:252 templates/base.html:34
+#: templates/catalog/article_list.html:4 templates/catalog/article_list.html:8
+msgid "Articles"
+msgstr "Artikli"
+
+#: config/settings.py:124
 msgid "English"
 msgstr "Engleski"
 
-#: config/settings.py:121
+#: config/settings.py:125
 msgid "Croatian"
 msgstr "Hrvatski"
 
-#: config/settings.py:122
+#: config/settings.py:126
 msgid "Italian"
 msgstr "Talijanski"
 
@@ -417,34 +508,34 @@ msgstr "Talijanski"
 msgid "Enter the employee number."
 msgstr "Upišite matični broj."
 
-#: measurements/entry.py:28
+#: measurements/entry.py:29
 msgid "The employee number must be a positive whole number."
 msgstr "Matični broj mora biti pozitivan cijeli broj."
 
-#: measurements/entry.py:36
+#: measurements/entry.py:37
 msgid "Scan the article barcode."
 msgstr "Skenirajte barkod artikla."
 
-#: measurements/entry.py:39
+#: measurements/entry.py:40
 #, python-format
 msgid "No article with barcode %(barcode)s."
 msgstr "Ne postoji artikl s barkodom %(barcode)s."
 
-#: measurements/entry.py:41
+#: measurements/entry.py:42
 #, python-format
 msgid "Article %(article)s is inactive."
 msgstr "Artikl %(article)s je neaktivan."
 
-#: measurements/entry.py:43
+#: measurements/entry.py:44
 #, python-format
 msgid "Category %(category)s is inactive."
 msgstr "Kategorija %(category)s je neaktivna."
 
-#: measurements/entry.py:58
+#: measurements/entry.py:59
 msgid "Enter a number of 0 or more with at most one decimal place."
 msgstr "Upišite broj 0 ili veći, s najviše jednom decimalom."
 
-#: measurements/entry.py:82
+#: measurements/entry.py:83
 msgid "Enter at least one value."
 msgstr "Upišite barem jednu vrijednost."
 
@@ -452,7 +543,7 @@ msgstr "Upišite barem jednu vrijednost."
 msgid "Measured at"
 msgstr "Vrijeme mjerenja"
 
-#: measurements/export.py:10 templates/measurements/entry.html:30
+#: measurements/export.py:10 templates/measurements/entry.html:31
 #: templates/measurements/measurement_detail.html:31
 #: templates/measurements/measurement_detail.html:52
 #: templates/measurements/measurement_list.html:52
@@ -501,7 +592,7 @@ msgstr "vrijeme mjerenja"
 msgid "article code"
 msgstr "šifra artikla"
 
-#: measurements/models.py:30 templates/catalog/article_import.html:60
+#: measurements/models.py:30 templates/catalog/article_import.html:26
 msgid "category code"
 msgstr "šifra kategorije"
 
@@ -517,7 +608,7 @@ msgstr "obrisano"
 msgid "deleted by"
 msgstr "obrisao"
 
-#: measurements/models.py:46 measurements/models.py:70
+#: measurements/models.py:46 measurements/models.py:71
 msgid "measurement"
 msgstr "mjerenje"
 
@@ -525,35 +616,41 @@ msgstr "mjerenje"
 msgid "measurements"
 msgstr "mjerenja"
 
-#: measurements/models.py:75
+#: measurements/models.py:76
 msgid "element code"
 msgstr "šifra elementa"
 
-#: measurements/models.py:76
+#: measurements/models.py:77
 msgid "element name"
 msgstr "naziv elementa"
 
-#: measurements/models.py:78
+#: measurements/models.py:79
 msgid "value"
 msgstr "vrijednost"
 
-#: measurements/models.py:82
+#: measurements/models.py:83
 msgid "measurement value"
 msgstr "vrijednost mjerenja"
 
-#: measurements/models.py:83
+#: measurements/models.py:84
 msgid "measurement values"
 msgstr "vrijednosti mjerenja"
 
-#: measurements/views.py:151
+#: measurements/views.py:121
+#, python-format
+msgid "An export can cover at most %(days)d days. Choose a shorter date range."
+msgstr ""
+"Izvoz može obuhvatiti najviše %(days)d dana. Odaberite kraće razdoblje."
+
+#: measurements/views.py:160
 msgid "Measurement corrected."
 msgstr "Mjerenje je ispravljeno."
 
-#: measurements/views.py:191
+#: measurements/views.py:206
 msgid "Measurement deleted."
 msgstr "Mjerenje je obrisano."
 
-#: measurements/views.py:203
+#: measurements/views.py:218
 msgid "Measurement restored."
 msgstr "Mjerenje je vraćeno."
 
@@ -586,18 +683,6 @@ msgstr "Novo mjerenje"
 msgid "Administration"
 msgstr "Administracija"
 
-#: templates/base.html:32 templates/catalog/category_list.html:4
-#: templates/catalog/category_list.html:8
-#: templates/catalog/element_list.html:29
-msgid "Categories"
-msgstr "Kategorije"
-
-#: templates/base.html:33 templates/catalog/category_elements.html:4
-#: templates/catalog/category_list.html:35
-#: templates/catalog/element_list.html:4 templates/catalog/element_list.html:8
-msgid "Elements"
-msgstr "Elementi"
-
 #: templates/base.html:48
 msgid "Log out"
 msgstr "Odjava"
@@ -618,7 +703,7 @@ msgstr "Novi artikl"
 #: templates/catalog/article_form.html:15
 #: templates/catalog/category_elements.html:35
 #: templates/catalog/category_form.html:15
-#: templates/catalog/element_form.html:15 templates/measurements/entry.html:61
+#: templates/catalog/element_form.html:15 templates/measurements/entry.html:69
 msgid "Save"
 msgstr "Spremi"
 
@@ -633,59 +718,31 @@ msgstr "Odustani"
 msgid "Import articles"
 msgstr "Uvoz artikala"
 
-#: templates/catalog/article_import.html:12
-msgid "Import result"
-msgstr "Rezultat uvoza"
-
-#: templates/catalog/article_import.html:14
-msgid "New"
-msgstr "Novi"
-
-#: templates/catalog/article_import.html:15
-msgid "Updated"
-msgstr "Ažurirani"
-
-#: templates/catalog/article_import.html:16
-msgid "Unchanged"
-msgstr "Nepromijenjeni"
-
-#: templates/catalog/article_import.html:17
-msgid "Rejected"
-msgstr "Odbijeni"
-
-#: templates/catalog/article_import.html:25
-msgid "Line"
-msgstr "Redak"
-
-#: templates/catalog/article_import.html:26
-msgid "Content"
-msgstr "Sadržaj"
-
-#: templates/catalog/article_import.html:27
-msgid "Reason"
-msgstr "Razlog"
-
-#: templates/catalog/article_import.html:52
+#: templates/catalog/article_import.html:18
+#: templates/catalog/element_import.html:18
 msgid "Import"
 msgstr "Uvezi"
 
-#: templates/catalog/article_import.html:53
+#: templates/catalog/article_import.html:19
 msgid "Back to articles"
 msgstr "Natrag na artikle"
 
-#: templates/catalog/article_import.html:57
+#: templates/catalog/article_import.html:23
+#: templates/catalog/element_import.html:23
 msgid "File format"
 msgstr "Format datoteke"
 
-#: templates/catalog/article_import.html:59
+#: templates/catalog/article_import.html:25
+#: templates/catalog/element_import.html:25
 msgid "Columns separated by a semicolon (;), in this order:"
 msgstr "Stupci odvojeni točkom-zarezom (;), ovim redom:"
 
-#: templates/catalog/article_import.html:61
+#: templates/catalog/article_import.html:27
+#: templates/catalog/element_import.html:27
 msgid "The first row is a header and is ignored."
 msgstr "Prvi redak je zaglavlje i preskače se."
 
-#: templates/catalog/article_import.html:62
+#: templates/catalog/article_import.html:28
 msgid ""
 "All columns are required. Category codes are matched regardless of upper or "
 "lower case."
@@ -693,11 +750,11 @@ msgstr ""
 "Svi stupci su obavezni. Šifre kategorija uspoređuju se bez obzira na velika "
 "i mala slova."
 
-#: templates/catalog/article_import.html:63
+#: templates/catalog/article_import.html:29
 msgid "Code, color and size are saved in upper case."
 msgstr "Šifra, boja i veličina spremaju se velikim slovima."
 
-#: templates/catalog/article_import.html:64
+#: templates/catalog/article_import.html:30
 msgid ""
 "Each barcode and each combination of code, color and size may exist only "
 "once."
@@ -705,14 +762,14 @@ msgstr ""
 "Svaki barkod i svaka kombinacija šifre, boje i veličine smiju postojati samo "
 "jednom."
 
-#: templates/catalog/article_import.html:65
+#: templates/catalog/article_import.html:31
 msgid ""
 "An existing barcode updates that article; rows with errors are skipped and "
 "listed."
 msgstr ""
 "Postojeći barkod ažurira taj artikl; reci s greškama se preskaču i navode."
 
-#: templates/catalog/article_import.html:66
+#: templates/catalog/article_import.html:32
 msgid ""
 "In Excel, format the barcode column as text, otherwise leading zeros or "
 "digits can be lost."
@@ -720,21 +777,25 @@ msgstr ""
 "U Excelu stupac s barkodom formatirajte kao tekst, inače se mogu izgubiti "
 "vodeće nule ili znamenke."
 
-#: templates/catalog/article_import.html:68
+#: templates/catalog/article_import.html:34
+#: templates/catalog/element_import.html:32
 msgid "Example"
 msgstr "Primjer"
 
 #: templates/catalog/article_list.html:10
+#: templates/catalog/element_list.html:10
 #: templates/measurements/measurement_list.html:19
 msgid "Export to Excel"
 msgstr "Izvoz u Excel"
 
 #: templates/catalog/article_list.html:11
+#: templates/catalog/element_list.html:11
 #: templates/measurements/measurement_list.html:20
 msgid "Export to CSV"
 msgstr "Izvoz u CSV"
 
 #: templates/catalog/article_list.html:12
+#: templates/catalog/element_list.html:12
 msgid "Import CSV"
 msgstr "Uvoz CSV-a"
 
@@ -755,8 +816,8 @@ msgstr "Sve kategorije"
 #: templates/catalog/article_list.html:32
 #: templates/catalog/article_list.html:52
 #: templates/catalog/category_list.html:18
-#: templates/catalog/element_list.html:14
-#: templates/catalog/element_list.html:30
+#: templates/catalog/element_list.html:20
+#: templates/catalog/element_list.html:36
 msgid "Status"
 msgstr "Status"
 
@@ -764,19 +825,19 @@ msgstr "Status"
 #: templates/catalog/article_list.html:68
 #: templates/catalog/category_elements.html:41
 #: templates/catalog/category_list.html:31
-#: templates/catalog/element_list.html:16
-#: templates/catalog/element_list.html:51
+#: templates/catalog/element_list.html:22
+#: templates/catalog/element_list.html:57
 msgid "Inactive"
 msgstr "Neaktivan"
 
 #: templates/catalog/article_list.html:35
-#: templates/catalog/element_list.html:17
+#: templates/catalog/element_list.html:23
 msgid "All"
 msgstr "Svi"
 
 #: templates/catalog/article_list.html:72
 #: templates/catalog/category_list.html:36
-#: templates/catalog/element_list.html:55
+#: templates/catalog/element_list.html:61
 #: templates/measurements/measurement_list.html:115
 msgid "Edit"
 msgstr "Uredi"
@@ -820,17 +881,6 @@ msgstr "Natrag na kategorije"
 msgid "Order"
 msgstr "Redni broj"
 
-#: templates/catalog/category_elements.html:22
-#: templates/catalog/category_list.html:17
-#: templates/catalog/element_list.html:27
-msgid "Name"
-msgstr "Naziv"
-
-#: templates/catalog/category_elements.html:23
-#: templates/catalog/element_list.html:28
-msgid "Unit"
-msgstr "Jedinica"
-
 #: templates/catalog/category_elements.html:47
 #, python-format
 msgid "Remove %(element)s from this category?"
@@ -866,7 +916,7 @@ msgstr "Svi aktivni elementi već su u ovoj kategoriji."
 
 #: templates/catalog/category_elements.html:77
 #: templates/catalog/element_form.html:4 templates/catalog/element_form.html:9
-#: templates/catalog/element_list.html:9
+#: templates/catalog/element_list.html:13
 msgid "New element"
 msgstr "Novi element"
 
@@ -889,7 +939,37 @@ msgstr "Još nema kategorija."
 msgid "Edit element"
 msgstr "Uredi element"
 
-#: templates/catalog/element_list.html:61
+#: templates/catalog/element_import.html:4
+#: templates/catalog/element_import.html:7
+msgid "Import elements"
+msgstr "Uvoz elemenata"
+
+#: templates/catalog/element_import.html:19
+msgid "Back to elements"
+msgstr "Natrag na elemente"
+
+#: templates/catalog/element_import.html:26
+#: templates/catalog/element_import.html:32
+msgid "unit"
+msgstr "jedinica"
+
+#: templates/catalog/element_import.html:28
+msgid "All columns are required. The code is saved in upper case."
+msgstr "Svi stupci su obavezni. Šifra se sprema velikim slovima."
+
+#: templates/catalog/element_import.html:29
+msgid ""
+"Only new elements are imported: a code that already exists, also as an "
+"inactive element, is rejected."
+msgstr ""
+"Uvoze se samo novi elementi: šifra koja već postoji, i kao neaktivan "
+"element, se odbija."
+
+#: templates/catalog/element_import.html:30
+msgid "Rows with errors are skipped and listed."
+msgstr "Retci s greškama se preskaču i navode."
+
+#: templates/catalog/element_list.html:67
 msgid "No elements found."
 msgstr "Nema elemenata."
 
@@ -907,19 +987,39 @@ msgstr "Prikaži nazive elemenata"
 msgid "Change employee"
 msgstr "Promijeni radnika"
 
-#: templates/measurements/entry.html:43
-msgid "Server error, the measurement was not saved. Please try again."
-msgstr "Greška na serveru, mjerenje nije spremljeno. Pokušajte ponovno."
+#: templates/measurements/entry.html:46
+msgid "Server error: the measurement was NOT saved. Please save again."
+msgstr "Greška na serveru: mjerenje NIJE spremljeno. Spremite ponovno."
 
-#: templates/measurements/entry.html:50
+#: templates/measurements/entry.html:47
+msgid ""
+"No connection to the server: the measurement was NOT saved. Check the "
+"connection and save again."
+msgstr ""
+"Nema veze sa serverom: mjerenje NIJE spremljeno. Provjerite vezu i spremite "
+"ponovno."
+
+#: templates/measurements/entry.html:48
+msgid "Server error: the article could not be loaded. Please try again."
+msgstr "Greška na serveru: artikl nije učitan. Pokušajte ponovno."
+
+#: templates/measurements/entry.html:49
+msgid ""
+"No connection to the server: the article could not be loaded. Check the "
+"connection and try again."
+msgstr ""
+"Nema veze sa serverom: artikl nije učitan. Provjerite vezu i pokušajte "
+"ponovno."
+
+#: templates/measurements/entry.html:58
 msgid "Save measurement?"
 msgstr "Spremiti mjerenje?"
 
-#: templates/measurements/entry.html:54
+#: templates/measurements/entry.html:62
 msgid "No values entered."
 msgstr "Nije upisana nijedna vrijednost."
 
-#: templates/measurements/entry.html:58
+#: templates/measurements/entry.html:66
 msgid "Back"
 msgstr "Natrag"
 
@@ -1045,6 +1145,38 @@ msgstr "Priprema datoteke…"
 #: templates/partials/download_script.html:4
 msgid "The export failed. Please try again."
 msgstr "Izvoz nije uspio. Pokušaj ponovno."
+
+#: templates/partials/import_result.html:6
+msgid "Import result"
+msgstr "Rezultat uvoza"
+
+#: templates/partials/import_result.html:8
+msgid "New"
+msgstr "Novi"
+
+#: templates/partials/import_result.html:10
+msgid "Updated"
+msgstr "Ažurirani"
+
+#: templates/partials/import_result.html:11
+msgid "Unchanged"
+msgstr "Nepromijenjeni"
+
+#: templates/partials/import_result.html:13
+msgid "Rejected"
+msgstr "Odbijeni"
+
+#: templates/partials/import_result.html:21
+msgid "Line"
+msgstr "Redak"
+
+#: templates/partials/import_result.html:22
+msgid "Content"
+msgstr "Sadržaj"
+
+#: templates/partials/import_result.html:23
+msgid "Reason"
+msgstr "Razlog"
 
 #: templates/partials/language_switch.html:8
 msgid "Language"

@@ -18,6 +18,10 @@ def local(moment):
     return timezone.localtime(moment).replace(tzinfo=None) if moment else None
 
 
+def is_formula_like(value):
+    return isinstance(value, str) and value.startswith('=')
+
+
 def xlsx_response(title, names, rows, filename):
     """
     rows: lists of typed values. Datetimes and decimals (measured values, one decimal place)
@@ -41,6 +45,9 @@ def xlsx_response(title, names, rows, filename):
 
     def cell(value, **style):
         result = WriteOnlyCell(sheet, value)
+        # openpyxl writes text starting with "=" as a formula; names and data are never formulas
+        if is_formula_like(value):
+            result.data_type = 's'
         for name, setting in style.items():
             setattr(result, name, setting)
         return result
@@ -51,6 +58,7 @@ def xlsx_response(title, names, rows, filename):
         sheet.append([
             cell(value, number_format='dd.mm.yyyy hh:mm:ss') if hasattr(value, 'hour')
             else cell(value, number_format='0.0') if hasattr(value, 'as_tuple')
+            else cell(value) if is_formula_like(value)
             else value
             for value in row
         ])

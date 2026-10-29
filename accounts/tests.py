@@ -1,16 +1,20 @@
+from datetime import timedelta
+
 from django.contrib.auth import authenticate
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
 
 from catalog.models import Category
 
+from . import throttle
 from .mixins import TenantAdminRequiredMixin, TenantQuerysetMixin
-from .models import Tenant, User
+from .models import LoginFailure, Tenant, User
 
 
 class TenantUserTests(TestCase):
@@ -39,6 +43,13 @@ class TenantUserTests(TestCase):
     def test_username_unique_per_tenant(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
             User.objects.create_user('admin', tenant=self.tenant_a, role='user')
+
+    def test_username_allows_only_letters_digits_and_some_signs(self):
+        user = User(username='pero ivic!', tenant=self.tenant_a, role='user')
+        with self.assertRaises(ValidationError) as error:
+            user.full_clean()
+        self.assertIn('username', error.exception.message_dict)
+        User(username='pero.ivic_2@x', tenant=self.tenant_a, role='user', password='x').full_clean()
 
     def test_one_user_per_role_per_tenant(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
@@ -106,6 +117,37 @@ class LoginFlowTests(TestCase):
         response = self.login(self.tenant_b, 'admin', 'pw-a')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Invalid company, username or password.')
+
+    def test_too_many_failures_lock_the_username(self):
+        for _attempt in range(throttle.MAX_FAILURES):
+            self.assertContains(self.login(self.tenant_a, 'admin', 'wrong'), 'Invalid company, username or password.')
+        # Locked: also the right password is refused, other users are not affected
+        self.assertContains(self.login(self.tenant_a, 'admin', 'pw-a'), 'Too many failed login attempts.')
+        self.assertRedirects(self.login(self.tenant_a, 'operator', 'pw-op'), reverse('home'))
+        # After the lock time
+        LoginFailure.objects.update(failed_at=timezone.now() - timedelta(minutes=throttle.LOCK_MINUTES + 1))
+        self.client.logout()
+        self.assertRedirects(self.login(self.tenant_a, 'admin', 'pw-a'), reverse('home'))
+
+    def test_successful_login_clears_failures(self):
+        self.login(self.tenant_a, 'admin', 'wrong')
+        self.assertRedirects(self.login(self.tenant_a, 'admin', 'pw-a'), reverse('home'))
+        self.assertFalse(LoginFailure.objects.exists())
+
+    def test_django_admin_login_is_locked_too(self):
+        for _attempt in range(throttle.MAX_FAILURES):
+            self.assertIsNone(authenticate(username='root', password='wrong'))
+        self.assertIsNone(authenticate(username='root', password='pw-super'))
+        # The same username in a tenant is counted separately
+        self.assertFalse(throttle.is_locked(self.tenant_a, 'root'))
+
+    def test_ended_session_sends_htmx_request_to_login_page(self):
+        response = self.client.get(reverse('measurements:article_panel'), {'barcode': '1'},
+                                   HTTP_HX_REQUEST='true', HTTP_HX_CURRENT_URL='http://testserver/measurements/new/')
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response['HX-Redirect'], f"{reverse('login')}?next=%2Fmeasurements%2Fnew%2F")
+        # Normal requests are redirected as usual
+        self.assertEqual(self.client.get(reverse('measurements:article_panel')).status_code, 302)
 
     def test_inactive_company_is_not_offered(self):
         self.tenant_b.is_active = False

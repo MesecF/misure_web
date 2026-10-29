@@ -1,27 +1,43 @@
-"""Export of the filtered articles to Excel (.xlsx) and CSV."""
+"""Export of the filtered articles and elements to Excel (.xlsx) and CSV."""
 
 from django.utils.translation import gettext as _
 
 from config.exports import csv_response, local, xlsx_response
 
 
-def header():
-    return [_('Code'), _('Color'), _('Size'), _('Category'), _('Category name'), _('Barcode'), _('Active'),
-            _('Created by'), _('Created at'), _('Changed by'), _('Changed at')]
+def audit(record):
+    """Active flag and who created and last changed the record."""
+    return [_('Yes') if record.is_active else _('No'),
+            record.created_by.username, local(record.created_at),
+            record.updated_by.username if record.updated_by else None, local(record.updated_at)]
 
 
-def rows(articles):
+def audit_header():
+    return [_('Active'), _('Created by'), _('Created at'), _('Changed by'), _('Changed at')]
+
+
+def article_header():
+    return [_('Code'), _('Color'), _('Size'), _('Category'), _('Category name'), _('Barcode'), *audit_header()]
+
+
+def article_rows(articles):
     """Barcodes stay text, so Excel does not turn them into numbers."""
     for a in articles:
-        yield [a.code, a.color, a.size, a.category.code, a.category.name, a.barcode,
-               _('Yes') if a.is_active else _('No'),
-               a.created_by.username, local(a.created_at),
-               a.updated_by.username if a.updated_by else None, local(a.updated_at)]
+        yield [a.code, a.color, a.size, a.category.code, a.category.name, a.barcode, *audit(a)]
 
 
-def to_xlsx(articles, filename):
-    return xlsx_response(_('Articles'), header(), rows(articles), filename)
+def element_header():
+    return [_('Code'), _('Name'), _('Unit'), _('Categories'), *audit_header()]
 
 
-def to_csv(articles, filename):
-    return csv_response(header(), rows(articles), filename)
+def element_rows(elements):
+    """Categories: codes of the categories the element is measured in."""
+    for e in elements:
+        categories = ', '.join(sorted(link.category.code for link in e.category_elements.all()))
+        yield [e.code, e.name, e.unit, categories, *audit(e)]
+
+
+def export(file_format, title, header, rows, filename):
+    if file_format == 'xlsx':
+        return xlsx_response(title, header, rows, filename)
+    return csv_response(header, rows, filename)

@@ -24,7 +24,8 @@ def parse_employee_number(text):
     text = (text or '').strip()
     if not text:
         return None, _('Enter the employee number.')
-    if not text.isdigit() or not 0 < int(text) <= MAX_EMPLOYEE_NUMBER:
+    # isascii: isdigit alone also accepts characters such as "²", which int() cannot convert
+    if not (text.isascii() and text.isdigit()) or not 0 < int(text) <= MAX_EMPLOYEE_NUMBER:
         return None, _('The employee number must be a positive whole number.')
     return int(text), None
 
